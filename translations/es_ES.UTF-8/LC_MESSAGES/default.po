@@ -346,7 +346,7 @@ msgstr "Todos los Días"
 
 #: frontend/components/Admin/Settings/ServicesTab.vue:57
 msgid "All listed domain names should point to this AzuraCast installation. Separate multiple domain names with commas."
-msgstr "Todos los nombres de dominio listados deben apuntar a esta instalación de AzuraCast. Separa varios nombres de dominio con comas."
+msgstr "Todos los nombres de dominio listados deben apuntar a esta instalación de Simona Music. Separa varios nombres de dominio con comas."
 
 #: frontend/components/Stations/Playlists.vue:30
 msgid "All Playlists"
@@ -670,35 +670,35 @@ msgstr "Evitar Artistas/Títulos Duplicados"
 
 #: frontend/components/Setup/Register.vue:15
 msgid "AzuraCast First-Time Setup"
-msgstr "Configuración Inicial de AzuraCast"
+msgstr "Configuración Inicial de Simona Music"
 
 #: frontend/components/Admin/Settings/GeneralTab.vue:21
 msgid "AzuraCast Instance Name"
-msgstr "Nombre de instancia de AzuraCast"
+msgstr "Nombre de instancia de Simona Music"
 
 #: frontend/components/Admin/GeoLite.vue:21
 msgid "AzuraCast ships with a built-in free IP geolocation database. You may prefer to use the MaxMind GeoLite service instead to achieve more accurate results. Using MaxMind GeoLite requires a license key, but once the key is provided, we will automatically keep the database updated."
-msgstr "AzuraCast incluye una base de datos de geolocalización IP gratuita. Es posible que prefiera utilizar el servicio MaxMind GeoLite en su lugar para obtener resultados más precisos. El uso de MaxMind GeoLite requiere una clave de licencia, pero una vez proporcionada la clave, mantendremos la base de datos actualizada automáticamente."
+msgstr "Simona Music incluye una base de datos de geolocalización IP gratuita. Es posible que prefiera utilizar el servicio MaxMind GeoLite en su lugar para obtener resultados más precisos. El uso de MaxMind GeoLite requiere una clave de licencia, pero una vez proporcionada la clave, mantendremos la base de datos actualizada automáticamente."
 
 #: frontend/components/Admin/Settings/ServicesTab.vue:8
 msgid "AzuraCast Update Checks"
-msgstr "Comprobaciones de Actualización de AzuraCast"
+msgstr "Comprobaciones de Actualización de Simona Music"
 
 #: frontend/components/Account/UserInfoPanel.vue:22
 msgid "AzuraCast User"
-msgstr "Usuario de AzuraCast"
+msgstr "Usuario de Simona Music"
 
 #: frontend/components/Admin/Permissions.vue:6
 msgid "AzuraCast uses a role-based access control system. Roles are given permissions to certain sections of the site, then users are assigned into those roles."
-msgstr "AzuraCast utiliza un sistema de control de acceso basado en roles. Los roles reciben permisos para ciertas secciones del sitio, luego los usuarios son asignados a esos roles."
+msgstr "Simona Music utiliza un sistema de control de acceso basado en roles. Los roles reciben permisos para ciertas secciones del sitio, luego los usuarios son asignados a esos roles."
 
 #: frontend/components/Stations/Streamers/ConnectionInfo.vue:85
 msgid "AzuraCast Wiki"
-msgstr "Wiki de AzuraCast"
+msgstr "Wiki de Simona Music"
 
 #: frontend/components/Stations/Playlists/ImportModal.vue:67
 msgid "AzuraCast will scan the uploaded file for matches in this station's music library. Media should already be uploaded before running this step. You can re-run this tool as many times as needed."
-msgstr "AzuraCast escaneará el archivo subido en busca de coincidencias en la biblioteca de música de esta estación. Los medios deben ser cargados antes de ejecutar este paso. Puede volver a ejecutar esta herramienta tantas veces como sea necesario."
+msgstr "Simona Music escaneará el archivo subido en busca de coincidencias en la biblioteca de música de esta estación. Los medios deben ser cargados antes de ejecutar este paso. Puede volver a ejecutar esta herramienta tantas veces como sea necesario."
 
 #: frontend/components/Admin/Relays.vue:6
 msgid "AzuraRelay is a standalone service that connects to your AzuraCast instance, automatically relays your stations via its own server, then reports the listener details back to your main instance. This page shows all currently connected instances."
@@ -4046,7 +4046,7 @@ msgstr "Impulsado por"
 
 #: frontend/components/Stations/Webhooks/Form/Discord.vue:128
 msgid "Powered by AzuraCast"
-msgstr "Desarrollado por AzuraCast"
+msgstr "Desarrollado por Simona Music"
 
 #: frontend/components/Admin/Settings/GeneralTab.vue:29
 msgid "Prefer Browser URL (If Available)"
@@ -6085,15 +6085,15 @@ msgstr "Actualizar"
 #: frontend/components/Admin/Updates.vue:3
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Notification/Check/UpdateCheck.php:44
 msgid "Update AzuraCast"
-msgstr "Actualizar AzuraCast"
+msgstr "Actualizar Simona Music"
 
 #: frontend/components/Admin/Updates.vue:74
 msgid "Update AzuraCast via Web"
-msgstr "Actualizar AzuraCast vía Web"
+msgstr "Actualizar Simona Music vía Web"
 
 #: frontend/components/Admin/Updates.vue:215
 msgid "Update AzuraCast? Your installation will restart."
-msgstr "¿Actualizar AzuraCast? Su instalación se reiniciará."
+msgstr "¿Actualizar Simona Music? Su instalación se reiniciará."
 
 #: frontend/components/Admin/Updates.vue:10
 msgid "Update Details"
@@ -6172,7 +6172,7 @@ msgstr "Uso (Us)"
 
 #: frontend/components/Account/ApiKeysPanel.vue:8
 msgid "Use API keys to authenticate with the AzuraCast API using the same permissions as your user account."
-msgstr "Utilice las claves API para autenticarse con la API de AzuraCast usando los mismos permisos que su cuenta de usuario."
+msgstr "Utilice las claves API para autenticarse con la API de Simona Music usando los mismos permisos que su cuenta de usuario."
 
 #: frontend/components/Account/EditForm.vue:68
 msgid "Use Browser Default"
@@ -6653,19 +6653,19 @@ msgstr "Todas las Estaciones"
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Controller/Api/Admin/LogsAction.php:80
 msgid "AzuraCast Application Log"
-msgstr "Log de aplicación de AzuraCast"
+msgstr "Log de aplicación de Simona Music"
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Controller/Api/Admin/LogsAction.php:86
 msgid "AzuraCast Now Playing Log"
-msgstr "Registro de Reproducción en Curso de AzuraCast"
+msgstr "Registro de Reproducción en Curso de Simona Music"
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Controller/Api/Admin/LogsAction.php:92
 msgid "AzuraCast Synchronized Task Log"
-msgstr "Registro de Tarea Sincronizada de AzuraCast"
+msgstr "Registro de Tarea Sincronizada de Simona Music"
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Controller/Api/Admin/LogsAction.php:98
 msgid "AzuraCast Queue Worker Log"
-msgstr "Registro de Trabajadores de Cola de AzuraCast"
+msgstr "Registro de Trabajadores de Cola de Simona Music"
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Controller/Api/Admin/LogsAction.php:104
 #, php-format
@@ -7433,7 +7433,7 @@ msgstr "La versión %s ya está disponible. Actualmente está ejecutando la vers
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Notification/Check/UpdateCheck.php:75
 msgid "New AzuraCast Rolling Release Available"
-msgstr "Disponible Nueva Versión de AzuraCast"
+msgstr "Disponible Nueva Versión de Simona Music"
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Notification/Check/UpdateCheck.php:79
 #, php-format
@@ -7470,7 +7470,7 @@ msgstr "La extensión de generación de perfiles de rendimiento está habilitada
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Notification/Check/ProfilerAdvisorCheck.php:35
 msgid "You can track the execution time and memory usage of any AzuraCast page or application from the profiler page."
-msgstr "Puede rastrear el tiempo de ejecución y el uso de la memoria de cualquier página o aplicación de AzuraCast desde la página del generador de perfiles."
+msgstr "Puede rastrear el tiempo de ejecución y el uso de la memoria de cualquier página o aplicación de Simona Music desde la página del generador de perfiles."
 
 #: /home/runner/work/AzuraCast/AzuraCast/backend/src/Notification/Check/ProfilerAdvisorCheck.php:41
 msgid "Profiler Control Panel"

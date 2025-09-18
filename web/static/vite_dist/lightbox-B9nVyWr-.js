@@ -1,0 +1,1 @@
+import{R as r,S as s}from"./vue-BsfewpWM.js";const i=Symbol();function c(t){s(i,t)}function a(){const t=r(i);return{vLightbox:e=>{e.addEventListener("click",n=>{if(typeof t<"u"){n.preventDefault();const o=e.getAttribute("href");o!==null&&t.value?.show(o)}})}}}export{a,c as u};

@@ -1,0 +1,1 @@
+import{_ as o}from"./PanelFooter-D_-n9Oyr.js";import{d as s,c as t,o as n,a as e,b as r,k as c}from"./vue-BsfewpWM.js";const i={id:"page-wrapper"},_={id:"main"},d={class:"container",id:"content"},h=s({__name:"DashboardNoSidebar",setup(m){return(a,p)=>(n(),t("div",i,[e("main",_,[e("div",d,[c(a.$slots,"default")])]),r(o)]))}});export{h as _};

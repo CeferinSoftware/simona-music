@@ -1,0 +1,1 @@
+import{a5 as c,f as u,u as l}from"./layout-CUzOT8aY.js";function m(o,e){const{confirmDelete:s}=c(),{notifySuccess:a}=u(),{axios:i}=l();return{doDelete:async n=>{const{value:f}=await s({title:o});if(f){const{data:t}=await i.delete(n);a(t.message),typeof e=="function"&&e(t)}}}}export{m as u};

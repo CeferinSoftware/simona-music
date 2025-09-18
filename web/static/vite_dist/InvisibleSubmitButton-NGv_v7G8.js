@@ -1,0 +1,1 @@
+import{_ as t}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{c as e,o}from"./vue-BsfewpWM.js";const i={},n={type:"submit",style:{position:"absolute",left:"-9999px",width:"1px",height:"1px"},tabindex:"-1","aria-hidden":"true"};function s(r,c){return o(),e("input",n)}const _=t(i,[["render",s]]);export{_ as I};

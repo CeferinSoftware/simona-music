@@ -2,19 +2,19 @@
     <footer id="footer">
         {{ $gettext('Powered by') }}
         <a
-            href="https://www.azuracast.com/"
+            href="https://simonamusic.net/"
             target="_blank"
-        >AzuraCast</a>
+        >Simona Music</a>
         &bull;
         <span v-html="version"/>
         &bull;
         <span v-html="platform"/><br>
-        {{ $gettext('Like our software?') }}
+        {{ $gettext('Visit our website') }}
         <a
-            href="https://donate.azuracast.com/"
+            href="https://simonamusic.net/"
             target="_blank"
         >
-            {{ $gettext('Donate to support AzuraCast!') }}
+            {{ $gettext('simonamusic.net') }}
         </a>
     </footer>
 </template>

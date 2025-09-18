@@ -1,0 +1,1 @@
+import{u as o}from"./useClientItemProvider-Ds0yxtsG.js";import{q as t}from"./vue-BsfewpWM.js";function m(e,a,c){const r=t(()=>e.data?.value??[]),s=t(()=>e.isFetching.value);return o(r,s,n=>{},async(n=!1)=>{await e.refetch()})}export{m as u};

@@ -1,0 +1,1 @@
+import{S as r,a as s,D as t}from"./luxon-F75Z0klY.js";import{j as i}from"./layout-CUzOT8aY.js";function f(){const{localeWithDashes:o,timeConfig:a}=i();return r.defaultLocale=o,{DateTime:t,Duration:s,timestampToRelative:e=>typeof e!="number"?"":t.fromSeconds(e).toRelative({...a})??""}}export{f as u};

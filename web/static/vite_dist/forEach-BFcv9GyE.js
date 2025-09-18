@@ -1,0 +1,1 @@
+import{i as y,b as u}from"./estoolkit-DCzBkaPJ.js";import{i}from"./isArrayLike-DknTMkCU.js";function b(r,t=y){if(!r)return r;const a=i(r)||Array.isArray(r)?u(0,r.length):Object.keys(r);for(let s=0;s<a.length;s++){const e=a[s],f=r[e];if(t(f,e,r)===!1)break}return r}export{b as f};

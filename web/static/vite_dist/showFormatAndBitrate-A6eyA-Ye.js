@@ -1,0 +1,1 @@
+function u(n){if(!n)return"";const r=[];return n.split(" ").forEach(e=>{r.push(e.toUpperCase())}),r.join(" ")}function p(n,r=null){return n===null?"":n==="flac"||r===null?u(n):r+"kbps "+u(n)}export{p as s};

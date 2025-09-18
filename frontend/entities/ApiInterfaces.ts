@@ -346,12 +346,12 @@ export interface ApiAdminRelay {
   shortcode?: string | null;
   /**
    * Station description
-   * @example "An AzuraCast station!"
+   * @example "A Simona Music station!"
    */
   description?: string | null;
   /**
    * Station homepage URL
-   * @example "https://www.azuracast.com/"
+   * @example "https://simonamusic.net/"
    */
   url?: string | null;
   /**
@@ -867,7 +867,7 @@ export interface ApiNowPlayingStation {
   shortcode: string;
   /**
    * Station description
-   * @example "An AzuraCast station!"
+   * @example "A Simona Music station!"
    */
   description: string;
   /**
@@ -1977,7 +1977,7 @@ export type Station = HasAutoIncrementId & {
   backend_config?: StationBackendConfiguration;
   /** @example "A sample radio station." */
   description?: string | null;
-  /** @example "https://demo.azuracast.com/" */
+  /** @example "https://simonamusic.net/" */
   url?: string | null;
   /** @example "Various" */
   genre?: string | null;
@@ -2470,7 +2470,7 @@ export interface HasUniqueId {
 }
 
 export type User = HasAutoIncrementId & {
-  /** @example "demo@azuracast.com" */
+  /** @example "demo@simonamusic.net" */
   email?: string;
   /** @example "" */
   auth_password?: string;

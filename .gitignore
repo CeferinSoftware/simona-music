@@ -1,60 +1,38 @@
-# Frontend
-node_modules
+# Ignorar archivos de desarrollo local
+.env
+docker-compose.override.yml
+node_modules/
+vendor/
 
-# Junk/cache files.
-*Thumbs.db
-tmp/cache/*---*
-*.DS_Store
-*.apdisk
-.vagrant
-.idea
-/ubuntu-*-console.log
-.phplint-cache
-.gitinfo
+# Logs
+*.log
+logs/
 
-# Local development files.
-/backend/config/routes.dev.php
-/env.ini
-/app/env.ini
-/app/.env
-/azuracast.env
-/util/fixtures/*
-/util/fixtures/**/*
-!/util/fixtures/.gitkeep
-/util/local_ssl/*
-!/util/local_ssl/.gitkeep
-/web/static/yarn-error.log
-/util/package_usage_report*
-/auth.json
+# Archivos temporales
+tmp/
+temp/
 
-# Composer-generated content
-/vendor/*
-/vendor/**/*
-!/vendor/.gitkeep
-
-# NPM built content
-/web/static/vite_dist/**/*
-!/web/static/vite_dist/.gitkeep
-/translations/frontend.pot
-/eslint_report.json
-
-# Ansible deployment files
-/ansible/
-/util/ansible/deploy.retry
-/util/ansible/update.retry
-/tests/_output/*
-
-# Docker files
-/docker-compose.yml
-/docker-compose.new.yml
-/docker-compose.override.yml
-/.env
+# Base de datos local
+*.sql
+*.db
 
 # Backups
-/*.tar.gz
-/*.zip
+backups/
 
-# Plugins
-/plugins/*
-/plugins/**/*
-!/plugins/.gitkeep
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos específicos de desarrollo
+azuracast.env
+dev.env
+
+# Cache
+cache/
+.cache/
