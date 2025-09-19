@@ -29,9 +29,9 @@ services:
       AZURACAST_SFTP_PORT: 2022
     env_file: azuracast.env
     ports:
-      - "80:80"
-      - "443:443"
-      - "2022:2022"
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:2022:2022"
       # Puertos para estaciones de radio
       - "8000-8500:8000-8500"
     networks:
