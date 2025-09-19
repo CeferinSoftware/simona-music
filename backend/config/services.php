@@ -84,9 +84,11 @@ return [
             ],
         ];
 
-        // Specify MariaDB version for local Docker installs. Let non-local ones auto-detect via Doctrine.
-        if (isset($connectionOptions['unix_socket']) || $environment->isTesting()) {
-            $connectionOptions['serverVersion'] = '11.8.2-MariaDB-1';
+        // For Docker installs, explicitly set MariaDB platform to avoid MySQL-specific introspection queries
+        // (e.g. referencing information_schema.ccsa.FULL_COLLATION_NAME which doesn't exist in MariaDB).
+        if ($environment->isDocker() || isset($connectionOptions['unix_socket']) || $environment->isTesting()) {
+            // Use a broadly compatible MariaDB 11.x identifier recognized by Doctrine DBAL
+            $connectionOptions['serverVersion'] = 'mariadb-11.4.0';
         }
 
         $config = new Doctrine\DBAL\Configuration();
