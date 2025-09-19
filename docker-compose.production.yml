@@ -10,6 +10,9 @@ services:
       - sftpgo_data:/var/azuracast/sftpgo/persist
       - backups:/var/azuracast/backups
       - tmp_data:/var/azuracast/www_tmp
+      # Inyectar fixes de configuración dentro del contenedor (sin bind-mount del repo completo)
+      - ./backend/config/services.php:/var/azuracast/www/backend/config/services.php:ro
+      - ./backend/src/Console/Command/AbstractDatabaseCommand.php:/var/azuracast/www/backend/src/Console/Command/AbstractDatabaseCommand.php:ro
     environment:
       # Configuración SSL automática
       LETSENCRYPT_HOST: simonamusic.net,www.simonamusic.net
