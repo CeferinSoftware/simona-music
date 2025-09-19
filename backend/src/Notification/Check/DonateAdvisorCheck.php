@@ -16,30 +16,8 @@ final class DonateAdvisorCheck
 
     public function __invoke(GetNotifications $event): void
     {
-        if (!$this->environment->isProduction()) {
-            return;
-        }
-
-        $request = $event->getRequest();
-
-        $rateLimit = $request->getRateLimit();
-        try {
-            $rateLimit->checkRequestRateLimit($request, 'notification:donate', 600, 1);
-        } catch (RateLimitExceededException) {
-            return;
-        }
-
-        $event->addNotification(
-            new Notification(
-                __('AzuraCast is free and open-source software.'),
-                __(
-                    'If you are enjoying AzuraCast, please consider donating to support our work. We depend ' .
-                    'on donations to build new features, fix bugs, and keep AzuraCast modern, accessible and free.',
-                ),
-                FlashLevels::Info,
-                __('Donate to AzuraCast'),
-                'https://donate.azuracast.com/'
-            )
-        );
+        // Ocultar por completo la notificación de donaciones en esta distribución.
+        // Se mantiene el método por compatibilidad, pero no añade notificaciones.
+        return;
     }
 }
