@@ -15,6 +15,8 @@ services:
       LETSENCRYPT_HOST: simonamusic.net,www.simonamusic.net
       LETSENCRYPT_EMAIL: eturingcorporation.com@gmail.com
       VIRTUAL_HOST: simonamusic.net,www.simonamusic.net
+      # Evitar que el cliente MariaDB requiera SSL en tareas internas
+      MYSQL_SSL_MODE: DISABLED
       # Puertos de producción
       AZURACAST_HTTP_PORT: 80
       AZURACAST_HTTPS_PORT: 443
