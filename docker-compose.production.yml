@@ -3,6 +3,9 @@ version: '3.8'
 services:
   web:
     image: ghcr.io/ceferinsoftware/simona-music:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - station_data:/var/azuracast/stations
       - shoutcast2_install:/var/azuracast/servers/shoutcast2
