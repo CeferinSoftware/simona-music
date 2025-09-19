@@ -3,9 +3,7 @@ version: '3.8'
 services:
   web:
     image: ghcr.io/ceferinsoftware/simona-music:latest
-    # Mapear tu código personalizado
     volumes:
-      - .:/var/azuracast/www
       - station_data:/var/azuracast/stations
       - shoutcast2_install:/var/azuracast/servers/shoutcast2
       - geolite_install:/var/azuracast/geoip
@@ -40,7 +38,8 @@ services:
         max-file: "5"
 
   mariadb:
-    image: mariadb:10.7
+    image: mariadb:11.4
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --skip-log-bin
     volumes:
       - db_data:/var/lib/mysql
     environment:
