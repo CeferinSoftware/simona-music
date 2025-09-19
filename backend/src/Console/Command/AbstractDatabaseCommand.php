@@ -35,6 +35,9 @@ abstract class AbstractDatabaseCommand extends CommandAbstract
         $commandFlags = [
             '--user=$DB_USERNAME',
             '--password=$DB_PASSWORD',
+            // Evitar que el cliente requiera TLS/SSL en entornos donde el servidor no lo soporta
+            '--ssl-mode=DISABLED',
+            '--ssl=0',
         ];
 
         if (isset($connSettings['unix_socket'])) {
