@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   web:
-    image: ghcr.io/azuracast/azuracast:latest
+    image: ghcr.io/ceferinsoftware/simona-music:latest
     # Mapear tu código personalizado
     volumes:
       - .:/var/azuracast/www

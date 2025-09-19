@@ -1,3 +1,26 @@
+# Build de Simona Music con vendor y assets incluidos
+
+# Etapa de build con toolchain (composer, node, vite)
+FROM ghcr.io/azuracast/azuracast:development AS build
+WORKDIR /var/azuracast
+
+# Copiamos todo el código personalizado
+COPY . /var/azuracast
+
+# Instalar dependencias PHP y construir frontend
+RUN set -eux; \
+    cd /var/azuracast/www; \
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader; \
+    npm ci; \
+    npm run build
+
+# Imagen final (runtime estable) con todo horneado
+FROM ghcr.io/azuracast/azuracast:latest
+WORKDIR /var/azuracast
+
+# Copiamos la app ya compilada (incluye vendor/ y assets)
+COPY --from=build /var/azuracast/www /var/azuracast/www
+
 # syntax=docker/dockerfile:1
 
 #
