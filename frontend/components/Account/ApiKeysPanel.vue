@@ -7,14 +7,6 @@
             {{
                 $gettext('Utilice las claves API para autenticarse con la API de Simona Music usando los mismos permisos que su cuenta de usuario.')
             }}
-
-            <a
-                href="/api"
-                class="alert-link"
-                target="_blank"
-            >
-                {{ $gettext('Documentación de la API') }}
-            </a>
         </template>
         <template #actions>
             <button

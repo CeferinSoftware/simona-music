@@ -3,7 +3,7 @@
         <template #info>
             <p class="card-text">
                 {{
-                    $gettext('AzuraRelay es un servicio independiente que puede conectarse a tu instancia para retransmitir estaciones y reportar oyentes. (Texto adaptado para Simona Music)')
+                    $gettext('SimonaRelay es un servicio independiente que puede conectarse a tu instancia para retransmitir estaciones y reportar oyentes.')
                 }}
             </p>
 

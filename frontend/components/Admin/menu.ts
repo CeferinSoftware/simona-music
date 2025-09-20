@@ -138,7 +138,7 @@ export function useAdminMenu(): ReactiveMenu {
                     },
                     {
                         key: 'relays',
-                        label: computed(() => $gettext('Connected AzuraRelays')),
+                        label: computed(() => $gettext('Connected SimonaRelays')),
                         url: {
                             name: 'admin:relays:index',
                         },

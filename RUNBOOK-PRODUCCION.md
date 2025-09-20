@@ -104,9 +104,9 @@ Notas:
 
 ## 🔄 Actualizaciones en Producción
 
-### Método Actual (Build Local - FUNCIONA)
+### ✅ METODOLOGÍA DEFINITIVA (FUNCIONA AL 100%)
 
-**FLUJO SIMPLE**: Cambios locales → GitHub → VPS build local.
+**FLUJO PROBADO**: Cambios locales → GitHub → VPS build con Dockerfile corregido.
 
 #### 1. Desarrollo Local → GitHub
 
@@ -117,39 +117,75 @@ git commit -m "descripción de cambios"
 git push origin main
 ```
 
-#### 2. Actualización en VPS
+#### 2. Actualización en VPS (METODOLOGÍA DEFINITIVA)
 
 ```bash
 cd /root/simona-music
 echo "COMPOSE_PROJECT_NAME=simona-music" > .env.local
 git pull origin main
 cp -f docker-compose.production.yml docker-compose.yml
+
+# Rebuild completo (CRÍTICO: usar --no-cache para forzar recompilación)
 docker compose --env-file .env.local down
+docker builder prune -af
 docker compose --env-file .env.local build --no-cache web
 docker compose --env-file .env.local up -d
+
+# Limpiar cache
 docker compose --env-file .env.local exec -T web azuracast_cli cache:clear
 ```
 
-### Ventajas del Método Actual
+### 🔧 Configuración Crítica del Dockerfile
 
-✅ **Funciona inmediatamente** - Sin configuración adicional  
-✅ **Build local** - Compila en el VPS con tus cambios  
+**IMPORTANTE**: El Dockerfile debe usar la etapa `development` como base para `final`:
+
+```dockerfile
+FROM development AS final
+
+# Cambiar a modo producción
+ENV APPLICATION_ENV="production" \
+    PROFILING_EXTENSION_ENABLED=0 \
+    ENABLE_WEB_UPDATER="true"
+
+# Instalar dependencias PHP de producción
+RUN composer install --no-dev --no-ansi --no-autoloader --no-interaction \
+    && composer dump-autoload --optimize --classmap-authoritative \
+    && composer clear-cache
+
+# Compilar frontend para producción
+RUN npm run build \
+    && npm cache clean --force
+```
+
+### 🎯 Por qué esta metodología funciona
+
+✅ **Dockerfile compila frontend** - Los assets se generan durante la construcción de la imagen  
+✅ **Sin bind-mounts problemáticos** - No hay conflictos entre archivos locales y del contenedor  
 ✅ **Volúmenes persistentes** - No se pierden datos con `COMPOSE_PROJECT_NAME` fijo  
-✅ **Sin registry externo** - No necesita Docker Hub ni GitHub Container Registry  
+✅ **Frontend incluido en imagen** - Los cambios de branding se compilan en la imagen final  
+✅ **Cache limpio** - `--no-cache` y `docker builder prune -af` aseguran rebuild completo  
 
-### Método Profesional (FUTURO - Requiere Configuración)
+### 🚨 Comandos Críticos que NO deben faltar
 
-**FLUJO PROFESIONAL**: Cambios locales → GitHub Actions → Imagen publicada → VPS pull.
+```bash
+# SIEMPRE incluir estos comandos:
+docker builder prune -af                    # Limpiar cache de Docker
+docker compose build --no-cache web         # Rebuild sin cache
+docker compose exec -T web azuracast_cli cache:clear  # Limpiar cache de app
+```
 
-**Requisitos:**
-- Cuenta de Docker Hub
-- Configurar secrets en GitHub
-- Configurar GitHub Actions
+### 📋 Verificación Post-Actualización
 
-**Cuando esté listo:**
-- Cambiar `build:` por `image:` en docker-compose.production.yml
-- Configurar Docker Hub secrets en GitHub
-- Usar `docker compose pull` en lugar de `build`
+```bash
+# Verificar que los cambios se aplicaron
+docker compose --env-file .env.local exec -T web bash -lc "find /var/azuracast/www/web/static -name '*.js' -exec grep -l 'Simona Music' {} \;"
+
+# Verificar servicios
+docker compose --env-file .env.local ps
+
+# Verificar logs si hay problemas
+docker compose --env-file .env.local logs -f web
+```
 
 ### Diagnóstico rápido
 ```bash
