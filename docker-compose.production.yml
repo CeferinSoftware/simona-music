@@ -7,12 +7,7 @@ services:
       dockerfile: Dockerfile
       target: final
     volumes:
-      # SOLUCIÓN DEFINITIVA: Bind-mount específicos para evitar sobrescribir vendor/
-      - ./frontend:/var/azuracast/www/frontend:ro
-      - ./translations:/var/azuracast/www/translations:ro
-      - ./backend/config/services.php:/var/azuracast/www/backend/config/services.php:ro
-      - ./backend/src/Console/Command/AbstractDatabaseCommand.php:/var/azuracast/www/backend/src/Console/Command/AbstractDatabaseCommand.php:ro
-      - ./web/static:/var/azuracast/www/web/static:rw
+      # Solo volúmenes de datos persistentes (sin bind-mounts de código)
       - station_data:/var/azuracast/stations
       - shoutcast2_install:/var/azuracast/servers/shoutcast2
       - geolite_install:/var/azuracast/geoip

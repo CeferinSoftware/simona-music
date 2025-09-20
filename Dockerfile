@@ -197,11 +197,18 @@ USER azuracast
 
 WORKDIR /var/azuracast/www
 
+# Copiar código fuente
 COPY --chown=azuracast:azuracast . .
 
+# Instalar dependencias PHP
 RUN composer install --no-dev --no-ansi --no-autoloader --no-interaction \
     && composer dump-autoload --optimize --classmap-authoritative \
     && composer clear-cache
+
+# Instalar dependencias Node y compilar frontend
+RUN npm ci --include=dev \
+    && npm run build \
+    && npm cache clean --force
 
 USER root
 
