@@ -191,23 +191,20 @@ CMD ["--no-main-command"]
 #
 # Final build (Just environment vars and squishing the FS)
 #
-FROM pre-final AS final
+FROM development AS final
 
-USER azuracast
+# Cambiar a modo producción
+ENV APPLICATION_ENV="production" \
+    PROFILING_EXTENSION_ENABLED=0 \
+    ENABLE_WEB_UPDATER="true"
 
-WORKDIR /var/azuracast/www
-
-# Copiar código fuente
-COPY --chown=azuracast:azuracast . .
-
-# Instalar dependencias PHP
+# Instalar dependencias PHP de producción
 RUN composer install --no-dev --no-ansi --no-autoloader --no-interaction \
     && composer dump-autoload --optimize --classmap-authoritative \
     && composer clear-cache
 
-# Instalar dependencias Node y compilar frontend
-RUN npm ci --include=dev \
-    && npm run build \
+# Compilar frontend para producción
+RUN npm run build \
     && npm cache clean --force
 
 USER root
