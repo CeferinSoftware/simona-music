@@ -18,8 +18,8 @@
                     id="edit_form_instance_name"
                     class="col-md-6"
                     :field="r$.instance_name"
-                    :label="$gettext('AzuraCast Instance Name')"
-                    :description="$gettext('This name will appear as a sub-header next to the AzuraCast logo, to help identify this server.')"
+                    :label="$gettext('Nombre de la instancia de Simona Music')"
+                    :description="$gettext('Este nombre aparecerá como subtítulo junto al logotipo de Simona Music, para ayudar a identificar este servidor.')"
                 />
 
                 <form-group-checkbox

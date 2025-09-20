@@ -62,7 +62,7 @@
                     <a
                         class="btn btn-primary"
                         role="button"
-                        href="https://github.com/AzuraCast/AzuraCast/issues/new/choose"
+                        href="#"
                         target="_blank"
                     >
                         <icon :icon="IconSupport" />

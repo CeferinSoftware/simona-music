@@ -3,7 +3,7 @@
         <template #info>
             <p class="card-text">
                 {{
-                    $gettext('AzuraCast uses a role-based access control system. Roles are given permissions to certain sections of the site, then users are assigned into those roles.')
+                    $gettext('Simona Music utiliza un sistema de control de acceso basado en roles. Los roles reciben permisos para ciertas secciones del sitio, y los usuarios se asignan a esos roles.')
                 }}
             </p>
         </template>

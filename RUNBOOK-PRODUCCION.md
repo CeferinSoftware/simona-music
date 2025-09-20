@@ -64,6 +64,44 @@ sleep 25
 docker compose exec -T web azuracast_cli azuracast:setup --init
 ```
 
+### HTTPS/SSL (Let's Encrypt)
+
+Requisitos previos:
+- DNS `A` para `simonamusic.net` y `www.simonamusic.net` apuntando a la IP del VPS
+- Puertos abiertos en el servidor: `80/tcp` y `443/tcp`
+- En `docker-compose.yml` del servicio `web`:
+  - `LETSENCRYPT_HOST: simonamusic.net,www.simonamusic.net`
+  - `VIRTUAL_HOST: simonamusic.net,www.simonamusic.net`
+
+Pasos:
+```bash
+cd /root/simona-music
+
+# 1) Forzar URL base en https
+sed -i 's|^INIT_BASE_URL=.*|INIT_BASE_URL=https://simonamusic.net|' azuracast.env
+docker compose up -d
+
+# 2) (si da error por redirección) desactivar temporalmente el forzado HTTPS
+docker compose exec -T web azuracast_cli azuracast:settings:set always_use_ssl false
+docker compose restart web
+
+# 3) Emitir certificados para todos los hosts definidos en LETSENCRYPT_HOST
+docker compose exec -T web sh -lc 'echo $LETSENCRYPT_HOST'  # debería mostrar ambos dominios
+docker compose exec -T web azuracast_cli azuracast:acme:get-certificate
+
+# 4) Re-activar el forzado HTTPS y limpiar caché
+docker compose exec -T web azuracast_cli azuracast:settings:set always_use_ssl true
+docker compose exec -T web azuracast_cli cache:clear
+docker compose restart web
+
+# 5) Verificar logs de ACME/certificados
+docker compose logs --tail=200 web | grep -i -E "acme|letsencrypt|cert|tls"
+```
+
+Notas:
+- Si aparece "connection refused" en el desafío ACME HTTP-01, asegúrate de que `always_use_ssl` esté en `false` mientras se emite el certificado y que el puerto 80 esté abierto.
+- La renovación es automática una vez emitido el certificado.
+
 ### Actualización de producción (pull desde GitHub)
 ```bash
 cd /root/simona-music

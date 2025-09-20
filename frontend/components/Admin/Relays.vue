@@ -1,19 +1,13 @@
 <template>
-    <card-page :title="$gettext('Connected AzuraRelays')">
+    <card-page :title="$gettext('Relés conectados')">
         <template #info>
             <p class="card-text">
                 {{
-                    $gettext('AzuraRelay is a standalone service that connects to your AzuraCast instance, automatically relays your stations via its own server, then reports the listener details back to your main instance. This page shows all currently connected instances.')
+                    $gettext('AzuraRelay es un servicio independiente que puede conectarse a tu instancia para retransmitir estaciones y reportar oyentes. (Texto adaptado para Simona Music)')
                 }}
             </p>
 
-            <a
-                class="btn btn-sm btn-light"
-                target="_blank"
-                href="https://github.com/AzuraCast/AzuraRelay"
-            >
-                {{ $gettext('About AzuraRelay') }}
-            </a>
+            <!-- Enlace externo a AzuraRelay ocultado en este fork -->
         </template>
 
         <data-table

@@ -51,6 +51,13 @@ export default function initApp(
             await appCallback(vueApp);
         }
 
+        // Fijar título base de la aplicación
+        try {
+            if (document && document.title) {
+                document.title = 'Simona Music';
+            }
+        } catch (e) { /* no-op */ }
+
         vueApp.mount(el);
     };
 

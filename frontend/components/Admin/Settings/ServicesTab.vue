@@ -5,7 +5,7 @@
     >
         <form-fieldset>
             <template #label>
-                {{ $gettext('AzuraCast Update Checks') }}
+                {{ $gettext('Comprobación de actualizaciones de Simona Music') }}
             </template>
 
             <div class="row g-3">
@@ -19,7 +19,7 @@
                             href="/docs/getting-started/updates/release-channels/"
                             target="_blank"
                         >
-                            {{ $gettext('Learn more about release channels in the AzuraCast docs.') }}
+                            {{ $gettext('Aprende más sobre los canales de lanzamiento en la documentación de Simona Music.') }}
                         </a>
                     </template>
 
@@ -33,7 +33,7 @@
                     class="col-md-6"
                     :field="r$.check_for_updates"
                     :label="$gettext('Show Update Announcements')"
-                    :description="$gettext('Show new releases within your update channel on the AzuraCast homepage.')"
+                    :description="$gettext('Mostrar nuevas versiones dentro de tu canal de actualizaciones en la página principal de Simona Music.')"
                 />
             </div>
         </form-fieldset>
@@ -54,7 +54,7 @@
                     class="col-md-6"
                     :field="r$.acme_domains"
                     :label="$gettext('Domain Name(s)')"
-                    :description="$gettext('All listed domain names should point to this AzuraCast installation. Separate multiple domain names with commas.')"
+                    :description="$gettext('Todos los nombres de dominio listados deben apuntar a esta instalación de Simona Music. Separe múltiples dominios con comas.')"
                 />
 
                 <form-group-field

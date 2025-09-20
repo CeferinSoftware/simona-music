@@ -56,14 +56,7 @@
                     </div>
 
                     <template #footer_actions>
-                        <a
-                            class="btn btn-info"
-                            href="/docs/getting-started/updates/release-channels/"
-                            target="_blank"
-                        >
-                            <icon :icon="IconInfo"/>
-                            {{ $gettext('About Release Channels') }}
-                        </a>
+                        <!-- Enlace a docs oficiales ocultado en este fork -->
                     </template>
                 </card-page>
             </div>
@@ -136,16 +129,7 @@
                             }}
                         </p>
 
-                        <a
-                            class="btn btn-info"
-                            href="/docs/getting-started/updates/"
-                            target="_blank"
-                        >
-                            <icon :icon="IconInfo"/>
-                            <span>
-                                {{ $gettext('Update Instructions') }}
-                            </span>
-                        </a>
+                        <!-- Enlace a docs oficiales ocultado en este fork -->
                     </div>
                 </card-page>
             </div>

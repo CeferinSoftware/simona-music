@@ -96,26 +96,7 @@
                 <li class="dropdown-divider">
                     &nbsp;
                 </li>
-                <li>
-                    <a
-                        class="dropdown-item"
-                        href="/docs/"
-                        target="_blank"
-                    >
-                        <icon :icon="IconSupport" />
-                        {{ $gettext('Documentation') }}
-                    </a>
-                </li>
-                <li>
-                    <a
-                        class="dropdown-item"
-                        href="/docs/help/troubleshooting/"
-                        target="_blank"
-                    >
-                        <icon :icon="IconHelp" />
-                        {{ $gettext('Help') }}
-                    </a>
-                </li>
+                <!-- Ocultamos enlaces a documentación de AzuraCast en este fork -->
                 <li class="dropdown-divider">
 &nbsp;
                 </li>

@@ -5,7 +5,7 @@
     >
         <template #info>
             {{
-                $gettext('Use API keys to authenticate with the AzuraCast API using the same permissions as your user account.')
+                $gettext('Utilice las claves API para autenticarse con la API de Simona Music usando los mismos permisos que su cuenta de usuario.')
             }}
 
             <a
@@ -13,7 +13,7 @@
                 class="alert-link"
                 target="_blank"
             >
-                {{ $gettext('API Documentation') }}
+                {{ $gettext('Documentación de la API') }}
             </a>
         </template>
         <template #actions>
