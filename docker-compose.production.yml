@@ -7,9 +7,8 @@ services:
       dockerfile: Dockerfile
       target: final
     volumes:
-      # Forzar regeneración de assets estáticos
-      - ./frontend:/var/azuracast/www/frontend:ro
-      - ./translations:/var/azuracast/www/translations:ro
+      # SOLUCIÓN DEFINITIVA: Bind-mount completo del repo para forzar regeneración
+      - .:/var/azuracast/www:ro
       - station_data:/var/azuracast/stations
       - shoutcast2_install:/var/azuracast/servers/shoutcast2
       - geolite_install:/var/azuracast/geoip
@@ -17,9 +16,8 @@ services:
       - backups:/var/azuracast/backups
       - tmp_data:/var/azuracast/www_tmp
       - acme_data:/var/azuracast/storage/acme
-      # Inyectar fixes de configuración dentro del contenedor (sin bind-mount del repo completo)
-      - ./backend/config/services.php:/var/azuracast/www/backend/config/services.php:ro
-      - ./backend/src/Console/Command/AbstractDatabaseCommand.php:/var/azuracast/www/backend/src/Console/Command/AbstractDatabaseCommand.php:ro
+      # Forzar regeneración de assets estáticos
+      - ./web/static:/var/azuracast/www/web/static:rw
     environment:
       # Configuración SSL automática
       LETSENCRYPT_HOST: simonamusic.net,www.simonamusic.net
