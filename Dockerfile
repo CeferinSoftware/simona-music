@@ -15,7 +15,7 @@ RUN set -eux; \
     npm run build
 
 # Imagen final (runtime estable) con todo horneado
-FROM ghcr.io/azuracast/azuracast:latest
+FROM ghcr.io/azuracast/azuracast:latest AS runtime
 WORKDIR /var/azuracast
 
 # Copiamos la app ya compilada (incluye vendor/ y assets)
