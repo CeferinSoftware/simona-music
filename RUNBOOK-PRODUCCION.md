@@ -102,13 +102,55 @@ Notas:
 - Si aparece "connection refused" en el desafío ACME HTTP-01, asegúrate de que `always_use_ssl` esté en `false` mientras se emite el certificado y que el puerto 80 esté abierto.
 - La renovación es automática una vez emitido el certificado.
 
-### Actualización de producción (pull desde GitHub)
+## 🔄 Actualizaciones en Producción
+
+### Metodología Profesional (Como AzuraCast Oficial)
+
+**NUEVO FLUJO**: Cambios locales → GitHub Actions → Imagen publicada → VPS actualiza.
+
+#### 1. Desarrollo Local → GitHub
+
+```bash
+# En tu PC local
+git add .
+git commit -m "descripción de cambios"
+git push origin main
+```
+
+#### 2. GitHub Actions (Automático)
+
+- GitHub compila automáticamente la imagen con tus cambios
+- Publica en `ghcr.io/ceferinsoftware/simona-music:latest`
+- Duración: ~5-10 minutos
+- Verificar en: https://github.com/ceferinsoftware/simona-music/actions
+
+#### 3. Actualización en VPS (Automática)
+
+**Opción A: Script automático (Recomendado)**
 ```bash
 cd /root/simona-music
-git pull
-cp -f docker-compose.production.yml docker-compose.yml
-docker compose up -d --build
+./update-simona.sh
 ```
+
+**Opción B: Manual**
+```bash
+cd /root/simona-music
+echo "COMPOSE_PROJECT_NAME=simona-music" > .env.local
+git pull origin main
+cp -f docker-compose.production.yml docker-compose.yml
+docker compose --env-file .env.local pull
+docker compose --env-file .env.local down
+docker compose --env-file .env.local up -d
+docker compose --env-file .env.local exec -T web azuracast_cli cache:clear
+```
+
+### Ventajas del Nuevo Sistema
+
+✅ **Sin builds locales en VPS** - Solo descarga imagen pre-compilada  
+✅ **Volúmenes persistentes** - No se pierden datos con `COMPOSE_PROJECT_NAME` fijo  
+✅ **Backup automático** - El script hace backup antes de actualizar  
+✅ **Rollback fácil** - Docker mantiene imagen anterior  
+✅ **Como AzuraCast oficial** - Mismo flujo: push → GitHub → pull → up
 
 ### Diagnóstico rápido
 ```bash
