@@ -104,9 +104,9 @@ Notas:
 
 ## 🔄 Actualizaciones en Producción
 
-### Metodología Profesional (Como AzuraCast Oficial)
+### Método Actual (Build Local - FUNCIONA)
 
-**NUEVO FLUJO**: Cambios locales → GitHub Actions → Imagen publicada → VPS actualiza.
+**FLUJO SIMPLE**: Cambios locales → GitHub → VPS build local.
 
 #### 1. Desarrollo Local → GitHub
 
@@ -117,40 +117,39 @@ git commit -m "descripción de cambios"
 git push origin main
 ```
 
-#### 2. GitHub Actions (Automático)
+#### 2. Actualización en VPS
 
-- GitHub compila automáticamente la imagen con tus cambios
-- Publica en `ghcr.io/ceferinsoftware/simona-music:latest`
-- Duración: ~5-10 minutos
-- Verificar en: https://github.com/ceferinsoftware/simona-music/actions
-
-#### 3. Actualización en VPS (Automática)
-
-**Opción A: Script automático (Recomendado)**
-```bash
-cd /root/simona-music
-./update-simona.sh
-```
-
-**Opción B: Manual**
 ```bash
 cd /root/simona-music
 echo "COMPOSE_PROJECT_NAME=simona-music" > .env.local
 git pull origin main
 cp -f docker-compose.production.yml docker-compose.yml
-docker compose --env-file .env.local pull
 docker compose --env-file .env.local down
+docker compose --env-file .env.local build --no-cache web
 docker compose --env-file .env.local up -d
 docker compose --env-file .env.local exec -T web azuracast_cli cache:clear
 ```
 
-### Ventajas del Nuevo Sistema
+### Ventajas del Método Actual
 
-✅ **Sin builds locales en VPS** - Solo descarga imagen pre-compilada  
+✅ **Funciona inmediatamente** - Sin configuración adicional  
+✅ **Build local** - Compila en el VPS con tus cambios  
 ✅ **Volúmenes persistentes** - No se pierden datos con `COMPOSE_PROJECT_NAME` fijo  
-✅ **Backup automático** - El script hace backup antes de actualizar  
-✅ **Rollback fácil** - Docker mantiene imagen anterior  
-✅ **Como AzuraCast oficial** - Mismo flujo: push → GitHub → pull → up
+✅ **Sin registry externo** - No necesita Docker Hub ni GitHub Container Registry  
+
+### Método Profesional (FUTURO - Requiere Configuración)
+
+**FLUJO PROFESIONAL**: Cambios locales → GitHub Actions → Imagen publicada → VPS pull.
+
+**Requisitos:**
+- Cuenta de Docker Hub
+- Configurar secrets en GitHub
+- Configurar GitHub Actions
+
+**Cuando esté listo:**
+- Cambiar `build:` por `image:` en docker-compose.production.yml
+- Configurar Docker Hub secrets en GitHub
+- Usar `docker compose pull` en lugar de `build`
 
 ### Diagnóstico rápido
 ```bash
