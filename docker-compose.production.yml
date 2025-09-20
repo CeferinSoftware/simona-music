@@ -5,7 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: final
     volumes:
+      # Forzar regeneración de assets estáticos
+      - ./frontend:/var/azuracast/www/frontend:ro
+      - ./translations:/var/azuracast/www/translations:ro
       - station_data:/var/azuracast/stations
       - shoutcast2_install:/var/azuracast/servers/shoutcast2
       - geolite_install:/var/azuracast/geoip
