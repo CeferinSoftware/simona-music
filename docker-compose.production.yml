@@ -2,7 +2,6 @@ version: '3.8'
 
 services:
   web:
-    image: ghcr.io/ceferinsoftware/simona-music:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,6 +12,7 @@ services:
       - sftpgo_data:/var/azuracast/sftpgo/persist
       - backups:/var/azuracast/backups
       - tmp_data:/var/azuracast/www_tmp
+      - acme_data:/var/azuracast/storage/acme
       # Inyectar fixes de configuración dentro del contenedor (sin bind-mount del repo completo)
       - ./backend/config/services.php:/var/azuracast/www/backend/config/services.php:ro
       - ./backend/src/Console/Command/AbstractDatabaseCommand.php:/var/azuracast/www/backend/src/Console/Command/AbstractDatabaseCommand.php:ro
@@ -86,6 +86,7 @@ volumes:
   sftpgo_data: {}
   backups: {}
   tmp_data: {}
+  acme_data: {}
 
 networks:
   azuracast:
