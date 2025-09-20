@@ -78,14 +78,7 @@
         </div>
         <div class="card-body">
             <p class="card-text">
-                {{ $gettext('Las instrucciones de configuración para software de emisión estarán disponibles en la documentación de Simona Music.') }}
-                <br>
-                <a
-                    href="/docs/user-guide/streaming-software/"
-                    target="_blank"
-                >
-                    {{ $gettext('AzuraCast Wiki') }}
-                </a>
+                {{ $gettext('Las instrucciones de configuración para software de emisión estarán disponibles próximamente.') }}
             </p>
         </div>
     </section>

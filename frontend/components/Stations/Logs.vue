@@ -42,20 +42,7 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text">
-                        {{ $gettext('You can find answers for many common questions in our support documents.') }}
-                    </p>
-                    <p class="card-text">
-                        <a
-                            href="/docs/help/troubleshooting/"
-                            target="_blank"
-                        >
-                            {{ $gettext('Support Documents') }}
-                        </a>
-                    </p>
-                    <p class="card-text">
-                        {{
-                            $gettext('If you\'re experiencing a bug or error, you can submit a GitHub issue using the link below.')
-                        }}
+                        {{ $gettext('Si experimentas algún problema, contacta con el administrador del sistema.') }}
                     </p>
                 </div>
                 <div class="card-body">

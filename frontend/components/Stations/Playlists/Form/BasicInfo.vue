@@ -96,12 +96,7 @@
                         :label="$gettext('Playlist Type')"
                     >
                         <template #description>
-                            <a
-                                href="/docs/user-guide/playlists/#advanced-playlists"
-                                target="_blank"
-                            >
-                                {{ $gettext('Learn about Advanced Playlists') }}
-                            </a>
+                            {{ $gettext('Las listas de reproducción avanzadas permiten configuraciones más complejas de reproducción.') }}
                         </template>
                     </form-group-multi-check>
 

@@ -50,10 +50,7 @@
                     {{
                         $gettext('Apply audio processors (like compressors, limiters, or equalizers) to your stream to create a more uniform sound or enhance the listening experience. Processing requires extra CPU resources, so it may slow down your server.')
                     }}
-                    <a
-                        href="/docs/help/optimizing/#disable-audio-post-processing"
-                        target="_blank"
-                    >{{ $gettext('Learn More about Post-processing CPU Impact') }}</a>
+                    {{ $gettext('El procesamiento de audio puede impactar el rendimiento del servidor.') }}
                 </template>
 
                 <div class="row g-3 mb-3">

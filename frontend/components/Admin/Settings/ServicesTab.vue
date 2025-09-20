@@ -15,12 +15,7 @@
                     :label="$gettext('Release Channel')"
                 >
                     <template #description>
-                        <a
-                            href="/docs/getting-started/updates/release-channels/"
-                            target="_blank"
-                        >
-                            {{ $gettext('Aprende más sobre los canales de lanzamiento en la documentación de Simona Music.') }}
-                        </a>
+                        {{ $gettext('Los canales de lanzamiento determinan la frecuencia de las actualizaciones automáticas.') }}
                     </template>
 
                     <p class="card-text font-weight-bold">
