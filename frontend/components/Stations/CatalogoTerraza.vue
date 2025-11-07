@@ -155,7 +155,7 @@
                         style="width: 50px; height: 50px;"
                     >
                         <icon
-                            :icon="IconMusic"
+                            :icon="IconMusicNote"
                             class="text-white"
                         />
                     </div>
@@ -255,7 +255,7 @@ import {
     IconSearch,
     IconAdd,
     IconPlay,
-    IconMusic,
+    IconMusicNote,
     IconPlaylist
 } from '~/components/Common/Icons/icons.ts';
 import {useNotify} from '~/components/Common/Toasts/useNotify.ts';
