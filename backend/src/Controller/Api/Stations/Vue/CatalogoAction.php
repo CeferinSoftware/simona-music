@@ -36,7 +36,7 @@ final class CatalogoAction implements SingleActionInterface
 
         return $response->withJson([
             'playlists' => $playlists,
-            'stationId' => $station->getId(),
+            'stationId' => $station->getIdRequired(),
             'stationName' => $station->getName()
         ]);
     }
