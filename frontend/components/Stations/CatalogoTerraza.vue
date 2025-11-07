@@ -258,7 +258,7 @@ import {
     IconMusic,
     IconPlaylist
 } from '~/components/Common/Icons/icons.ts';
-import {useNotify} from '~/functions/useNotify.ts';
+import {useNotify} from '~/components/Common/Toasts/useNotify.ts';
 import {usePlayerStore} from '~/functions/usePlayerStore.ts';
 import {useDebounceFn} from '@vueuse/core';
 

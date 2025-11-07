@@ -252,7 +252,7 @@ import {useApiItemProvider} from '~/functions/dataTable/useApiItemProvider.ts';
 import {QueryKeys} from '~/entities/Queries.ts';
 import {useQueryClient} from '@tanstack/vue-query';
 import {userAllowedForStation} from '~/acl.ts';
-import {useNotify} from '~/functions/useNotify.ts';
+import {useNotify} from '~/components/Common/Toasts/useNotify.ts';
 
 const {$gettext} = useTranslate();
 const {axios} = useAxios();

@@ -124,7 +124,7 @@
 import { ref, computed } from 'vue';
 import { useTranslate } from '~/vendor/gettext';
 import { useAxios } from '~/vendor/axios';
-import { useNotify } from '~/functions/useNotify';
+import { useNotify } from '~/components/Common/Toasts/useNotify';
 import Modal from '~/components/Common/Modal.vue';
 import { getApiUrl } from '~/router';
 
