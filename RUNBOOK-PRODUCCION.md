@@ -221,6 +221,7 @@ docker compose exec -T web bash -lc "ss -lntp | egrep ':80|:443' && curl -I http
 ### ⚠️ ACTUALIZAR PRODUCCIÓN CON NUEVAS FUNCIONALIDADES (SIN PERDER DATOS)
 
 **NUNCA ejecutar `azuracast:setup --init` en producción - BORRA TODOS LOS DATOS**
+**NUNCA ejecutar `docker compose down` - PUEDE PERDER REFERENCIA A VOLÚMENES**
 
 **Procedimiento correcto para actualizar código:**
 
@@ -235,9 +236,9 @@ docker compose exec web azuracast_cli azuracast:backup /var/azuracast/backups/ba
 # 3. Actualizar código desde GitHub
 git pull origin main
 
-# 4. Recrear contenedores con código nuevo
-docker compose down
-docker compose up -d --build
+# 4. Rebuild contenedores SIN bajarlos (preserva volúmenes)
+docker compose build --no-cache
+docker compose up -d --force-recreate
 
 # 5. Ejecutar SOLO migraciones (preserva datos existentes)
 docker compose exec web azuracast_cli migrations:migrate --no-interaction --allow-no-migration
@@ -252,9 +253,10 @@ docker compose restart web
 curl -I https://simonamusic.net
 ```
 
-**Si perdiste datos por ejecutar `azuracast:setup --init`:**
-1. Restaurar backup de Vultr (más reciente disponible)
-2. Seguir el procedimiento de arriba para actualizar código sin perder datos
+**Si perdiste datos:**
+1. Restaurar SNAPSHOT de Vultr (más reciente) - NO backup, usar snapshot
+2. NO ejecutar docker compose down
+3. Seguir el procedimiento de arriba para actualizar código
 
 ### Problemas conocidos y soluciones aplicadas
 - Error: `1.: command not found` al copiar comandos
