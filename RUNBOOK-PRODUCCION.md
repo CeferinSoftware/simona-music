@@ -120,6 +120,58 @@ Notas:
 
 ## 🔄 Actualizaciones en Producción
 
+### 📊 Cuándo usar BUILD vs RESTART
+
+#### ⚡ RESTART (actualizaciones normales de código)
+
+**Usar para:**
+- Cambios en código Vue/TypeScript (`frontend/`)
+- Cambios en código PHP (`backend/`)
+- Cambios en plantillas Twig (`backend/templates/`)
+- Cambios en traducciones (`translations/`)
+
+**Comando:**
+```bash
+cd /root/simona-music
+git pull origin main
+docker compose -f docker-compose.production.yml restart web
+```
+
+**Ventajas:**
+- ⚡ Rápido (10-30 segundos)
+- 💾 No consume espacio extra en disco
+- ✅ El frontend se recompila automáticamente al iniciar
+
+#### 🔨 BUILD (cambios en dependencias o estructura)
+
+**Usar SOLO para:**
+- Cambios en `Dockerfile`
+- Cambios en dependencias PHP (`composer.json`)
+- Cambios en dependencias Node (`package.json`)
+- Primera instalación en servidor nuevo
+
+**Comando:**
+```bash
+cd /root/simona-music
+git pull origin main
+docker compose -f docker-compose.production.yml build --no-cache web
+docker compose -f docker-compose.production.yml up -d --force-recreate web
+```
+
+**⚠️ Problema:** Cada build crea una imagen nueva de ~2-3 GB sin borrar las antiguas
+
+**Solución - Limpiar espacio periódicamente:**
+```bash
+# Ver imágenes acumuladas
+docker images
+
+# Limpiar imágenes no usadas (recupera 20-60 GB)
+docker system prune -a -f
+
+# Ver espacio liberado
+df -h
+```
+
 ### ✅ METODOLOGÍA DEFINITIVA (FUNCIONA AL 100%)
 
 **FLUJO PROBADO**: Cambios locales → GitHub → VPS build con Dockerfile corregido.
