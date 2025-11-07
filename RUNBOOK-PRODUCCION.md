@@ -55,14 +55,29 @@ cp -f azuracast.production.env azuracast.env
 ufw --force enable
 ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 2022/tcp && ufw allow 8000:8500/tcp
 
-# Arranque limpio (primera vez)
+# Arranque limpio (primera vez SOLAMENTE - borra todos los datos)
 docker compose down || true
 docker volume rm simona-music_db_data || true
 docker compose up -d --build
 sleep 25
 
-# Setup (producción)
+# Setup inicial (SOLO primera instalación - NUNCA en actualizaciones)
 docker compose exec -T web azuracast_cli azuracast:setup --init
+```
+
+### ⚠️ IMPORTANTE: Diferencia entre instalación inicial y actualización
+
+**Primera instalación (servidor nuevo SIN datos):**
+```bash
+docker compose exec -T web azuracast_cli azuracast:setup --init
+```
+
+**Actualización (servidor con datos existentes):**
+```bash
+# NUNCA usar --init, solo ejecutar migraciones
+docker compose exec -T web azuracast_cli migrations:migrate --no-interaction --allow-no-migration
+docker compose exec -T web azuracast_cli cache:clear
+docker compose restart web
 ```
 
 ### HTTPS/SSL (Let's Encrypt)
@@ -202,6 +217,44 @@ curl -I http://SERVIDOR_IP
 # Dentro del contenedor web
 docker compose exec -T web bash -lc "ss -lntp | egrep ':80|:443' && curl -I http://127.0.0.1 || true"
 ```
+
+### ⚠️ ACTUALIZAR PRODUCCIÓN CON NUEVAS FUNCIONALIDADES (SIN PERDER DATOS)
+
+**NUNCA ejecutar `azuracast:setup --init` en producción - BORRA TODOS LOS DATOS**
+
+**Procedimiento correcto para actualizar código:**
+
+```bash
+# 1. Conectar al servidor
+ssh root@155.138.174.57
+cd /root/simona-music
+
+# 2. Hacer backup ANTES de actualizar (por seguridad)
+docker compose exec web azuracast_cli azuracast:backup /var/azuracast/backups/backup_manual_$(date +%Y%m%d_%H%M%S).zip
+
+# 3. Actualizar código desde GitHub
+git pull origin main
+
+# 4. Recrear contenedores con código nuevo
+docker compose down
+docker compose up -d --build
+
+# 5. Ejecutar SOLO migraciones (preserva datos existentes)
+docker compose exec web azuracast_cli migrations:migrate --no-interaction --allow-no-migration
+
+# 6. Limpiar caché
+docker compose exec web azuracast_cli cache:clear
+
+# 7. Reiniciar servicio
+docker compose restart web
+
+# 8. Verificar que todo funciona
+curl -I https://simonamusic.net
+```
+
+**Si perdiste datos por ejecutar `azuracast:setup --init`:**
+1. Restaurar backup de Vultr (más reciente disponible)
+2. Seguir el procedimiento de arriba para actualizar código sin perder datos
 
 ### Problemas conocidos y soluciones aplicadas
 - Error: `1.: command not found` al copiar comandos
