@@ -69,7 +69,7 @@ return static function (RouteCollectorProxy $group) {
 
                     $group->put('/branding', Controller\Api\Stations\PutBrandingAction::class)
                         ->setName('api:stations:branding:put')
-                        ->add(new Middleware\Permissions(StationPermissions::ManageProfile, true));
+                        ->add(new Middleware\Permissions(StationPermissions::Profile, true));
 
                     // Screens
                     $group->get('/screens', Controller\Api\Stations\Screens\ListAction::class)
@@ -78,15 +78,15 @@ return static function (RouteCollectorProxy $group) {
 
                     $group->post('/screens', Controller\Api\Stations\Screens\CreateAction::class)
                         ->setName('api:stations:screens:create')
-                        ->add(new Middleware\Permissions(StationPermissions::ManageProfile, true));
+                        ->add(new Middleware\Permissions(StationPermissions::Profile, true));
 
                     $group->put('/screens/{screen_id}', Controller\Api\Stations\Screens\UpdateAction::class)
                         ->setName('api:stations:screens:update')
-                        ->add(new Middleware\Permissions(StationPermissions::ManageProfile, true));
+                        ->add(new Middleware\Permissions(StationPermissions::Profile, true));
 
                     $group->delete('/screens/{screen_id}', Controller\Api\Stations\Screens\DeleteAction::class)
                         ->setName('api:stations:screens:delete')
-                        ->add(new Middleware\Permissions(StationPermissions::ManageProfile, true));
+                        ->add(new Middleware\Permissions(StationPermissions::Profile, true));
 
                     $group->map(
                         ['GET', 'POST'],
