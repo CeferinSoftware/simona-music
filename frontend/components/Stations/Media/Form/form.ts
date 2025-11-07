@@ -33,6 +33,7 @@ export type StationMediaRecord =
         | 'custom_fields'
         | 'extra_metadata'
     >> & {
+        video_url: string | null,
         custom_fields: Record<string, any>,
         extra_metadata: StationMediaMetadata
     }
@@ -73,6 +74,7 @@ export const useStationsMediaForm = defineStore(
                 genre: null,
                 lyrics: null,
                 isrc: null,
+                video_url: null,
                 custom_fields: {},
                 extra_metadata: {
                     amplify: null,

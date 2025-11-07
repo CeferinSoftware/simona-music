@@ -1,5 +1,18 @@
 <template>
-    <div class="public-page">
+    <!-- Fullscreen Display Mode (for TV/Projector screens) -->
+    <fullscreen-display
+        v-if="isFullscreenMode"
+        :current-song="currentSong"
+        :station-short-name="stationShortName"
+        :display-mode="displayMode"
+        :audio-element="audioElement"
+    />
+
+    <!-- Normal Player Mode -->
+    <div
+        v-else
+        class="public-page"
+    >
         <div class="card">
             <div class="card-body">
                 <h2 class="card-title mb-3">
@@ -47,18 +60,22 @@
     </div>
 
     <song-history-modal
+        v-if="!isFullscreenMode"
         ref="$songHistoryModal"
         :show-album-art="showAlbumArt"
         :history="history"
     />
 
     <request-modal
-        v-if="enableRequests"
+        v-if="enableRequests && !isFullscreenMode"
         ref="$requestModal"
         v-bind="props"
     />
 
-    <lightbox ref="$lightbox" />
+    <lightbox
+        v-if="!isFullscreenMode"
+        ref="$lightbox"
+    />
 </template>
 
 <script setup lang="ts">
@@ -66,7 +83,8 @@ import SongHistoryModal from "~/components/Public/FullPlayer/SongHistoryModal.vu
 import RequestModal from "~/components/Public/FullPlayer/RequestModal.vue";
 import Icon from "~/components/Common/Icons/Icon.vue";
 import RadioPlayer, {PlayerProps} from "~/components/Public/Player.vue";
-import {shallowRef, useTemplateRef} from "vue";
+import FullscreenDisplay from "~/components/Public/FullscreenDisplay.vue";
+import {computed, shallowRef, useTemplateRef, ref, watch} from "vue";
 import Lightbox from "~/components/Common/Lightbox.vue";
 import {useProvideLightbox} from "~/vendor/lightbox";
 import {IconDownload, IconHelp, IconHistory} from "~/components/Common/Icons/icons.ts";
@@ -87,10 +105,50 @@ const props = withDefaults(
 );
 
 const history = shallowRef<ApiNowPlayingSongHistory[]>([]);
+const currentNp = ref<ApiNowPlaying | null>(null);
+const audioElement = ref<HTMLAudioElement | null>(null);
+
+// Detect if we should show fullscreen mode
+const isFullscreenMode = computed(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.has('display') || urlParams.has('fullscreen');
+});
+
+const stationShortName = computed(() => {
+    return currentNp.value?.station?.shortcode || '';
+});
+
+const displayMode = computed<'videoclips' | 'waveform'>(() => {
+    return (currentNp.value?.station as any)?.display_mode || 'waveform';
+});
+
+const currentSong = computed(() => {
+    if (!currentNp.value?.now_playing?.song) return null;
+    
+    return {
+        id: currentNp.value.now_playing.song.id || '',
+        title: currentNp.value.now_playing.song.title || '',
+        artist: currentNp.value.now_playing.song.artist || '',
+        video_url: (currentNp.value.now_playing.song as any).video_url || null
+    };
+});
 
 const onNowPlayingUpdate = (newNowPlaying: ApiNowPlaying) => {
     history.value = newNowPlaying?.song_history;
+    currentNp.value = newNowPlaying;
 }
+
+// Get audio element reference for visualization
+function getAudioElement() {
+    const audioElements = document.querySelectorAll('audio');
+    if (audioElements.length > 0) {
+        audioElement.value = audioElements[0] as HTMLAudioElement;
+    }
+}
+
+watch(currentNp, () => {
+    setTimeout(getAudioElement, 1000);
+}, { immediate: true });
 
 const $songHistoryModal = useTemplateRef('$songHistoryModal');
 

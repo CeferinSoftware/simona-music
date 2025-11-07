@@ -77,6 +77,15 @@ final class StationMedia implements
     #[ORM\Column]
     public int $art_updated_at = 0;
 
+    #[
+        OA\Property(
+            description: "URL of the video clip (YouTube, Vimeo, etc.) for this song",
+            example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        ),
+        ORM\Column(length: 500, nullable: true)
+    ]
+    public ?string $video_url = null;
+
     #[ORM\Column(name: 'extra_metadata', type: 'json', nullable: true)]
     private ?array $extra_metadata_raw = null;
 

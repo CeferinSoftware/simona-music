@@ -21,6 +21,15 @@
                     :label="$gettext('Allow Song Requests')"
                     :description="$gettext('Enable listeners to request a song for play on your station. Only songs that are already in your playlists are requestable.')"
                 />
+                
+                <form-group-select
+                    id="edit_form_display_mode"
+                    class="col-md-6"
+                    :field="r$.display_mode"
+                    :options="displayModeOptions"
+                    :label="$gettext('Public Player Display Mode')"
+                    :description="$gettext('Choose what to display on public player page (for screens/TVs): videoclips if available, or audio waveform visualization.')"
+                />
             </div>
 
             <div
@@ -56,6 +65,7 @@
 import FormFieldset from "~/components/Form/FormFieldset.vue";
 import FormGroupField from "~/components/Form/FormGroupField.vue";
 import FormGroupCheckbox from "~/components/Form/FormGroupCheckbox.vue";
+import FormGroupSelect from "~/components/Form/FormGroupSelect.vue";
 import BackendDisabled from "~/components/Admin/Stations/Form/Common/BackendDisabled.vue";
 import {computed} from "vue";
 import Tab from "~/components/Common/Tab.vue";
@@ -63,8 +73,21 @@ import {BackendAdapters} from "~/entities/ApiInterfaces.ts";
 import {storeToRefs} from "pinia";
 import {useAdminStationsForm} from "~/components/Admin/Stations/Form/form.ts";
 import {useFormTabClass} from "~/functions/useFormTabClass.ts";
+import {useTranslate} from "~/vendor/gettext.ts";
 
 const {r$, form} = storeToRefs(useAdminStationsForm());
+const {$gettext} = useTranslate();
+
+const displayModeOptions = computed(() => [
+    {
+        value: 'waveform',
+        text: $gettext('Audio Waveform Visualization')
+    },
+    {
+        value: 'videoclips',
+        text: $gettext('Video Clips (YouTube/Vimeo)')
+    }
+]);
 
 const tabClass = useFormTabClass(computed(() => r$.value.$groups.requestsTab));
 

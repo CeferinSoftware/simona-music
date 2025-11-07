@@ -47,6 +47,15 @@
             />
 
             <form-group-field
+                id="edit_form_video_url"
+                class="col-md-6"
+                :field="r$.video_url"
+                :label="$gettext('Video URL')"
+                :description="$gettext('YouTube or Vimeo URL for this song (for public player display)')"
+                :placeholder="$gettext('https://www.youtube.com/watch?v=...')"
+            />
+
+            <form-group-field
                 id="edit_form_isrc"
                 class="col-md-6"
                 :field="r$.isrc"

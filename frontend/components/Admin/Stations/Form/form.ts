@@ -94,6 +94,7 @@ export const useAdminStationsForm = defineStore(
             },
             enable_hls: false,
             enable_requests: false,
+            display_mode: 'waveform',
             request_delay: 5,
             request_threshold: 15,
             enable_streamers: false,

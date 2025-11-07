@@ -297,6 +297,16 @@ final class Station implements Stringable, IdentifiableEntityInterface
     public bool $enable_requests = false;
 
     #[
+        OA\Property(
+            description: "Display mode for public player page: 'waveform' or 'videoclips'",
+            example: 'waveform'
+        ),
+        ORM\Column(length: 20),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public string $display_mode = 'waveform';
+
+    #[
         OA\Property(example: 5),
         ORM\Column(nullable: true),
         Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])

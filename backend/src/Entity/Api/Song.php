@@ -29,6 +29,14 @@ class Song
     public ResolvableUrl $art;
 
     #[OA\Property(
+        description: 'URL to the video clip (YouTube, Vimeo, etc.) if available.',
+        type: 'string',
+        nullable: true,
+        example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+    )]
+    public ?string $video_url = null;
+
+    #[OA\Property(
         type: 'array',
         items: new OA\Items(type: 'string', example: 'custom_field_value')
     )]

@@ -61,6 +61,11 @@ final class SongApiGenerator
             )
         );
 
+        // Add video_url if available from StationMedia
+        if ($song instanceof StationMedia) {
+            $response->video_url = $song->video_url;
+        }
+
         return $response;
     }
 
