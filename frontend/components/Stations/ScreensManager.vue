@@ -7,7 +7,7 @@
                 class="btn btn-sm btn-light"
                 @click="openCreateModal"
             >
-                <icon-add />
+                <icon :icon="IconAdd" />
                 {{ $gettext('Nueva Pantalla') }}
             </button>
         </div>
@@ -37,21 +37,21 @@
                         @click="copyUrl(row.item.public_url)"
                         :title="$gettext('Copiar URL')"
                     >
-                        <icon-link />
+                        <icon :icon="IconCopy" />
                     </button>
                     <button
                         type="button"
                         class="btn btn-sm btn-primary me-1"
                         @click="editScreen(row.item)"
                     >
-                        <icon-edit />
+                        <icon :icon="IconEdit" />
                     </button>
                     <button
                         type="button"
                         class="btn btn-sm btn-danger"
                         @click="deleteScreen(row.item)"
                     >
-                        <icon-delete />
+                        <icon :icon="IconDelete" />
                     </button>
                 </template>
             </data-table>
@@ -127,7 +127,8 @@ import { useAxios } from '~/vendor/axios';
 import { useNotify } from '~/components/Common/Toasts/useNotify';
 import DataTable, { DataTableField } from '~/components/Common/DataTable.vue';
 import ModalForm from '~/components/Common/ModalForm.vue';
-import { IconAdd, IconEdit, IconDelete, IconLink } from '~/components/Common/Icons/icons';
+import Icon from '~/components/Common/Icons/Icon.vue';
+import { IconAdd, IconEdit, IconDelete, IconCopy } from '~/components/Common/Icons/icons';
 
 interface Screen {
     id: number;
