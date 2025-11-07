@@ -251,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue';
+import {ref, computed, onMounted, useTemplateRef} from 'vue';
 import {useAxios} from '~/vendor/axios';
 import {useTranslate} from '~/vendor/gettext';
 import {getStationApiUrl} from '~/router.ts';
@@ -312,8 +312,8 @@ const activePlaylistId = ref<number | string>('');
 const selectedItems = ref<MediaFile[]>([]);
 const adding = ref(false);
 
-const $dataTable = ref<InstanceType<typeof DataTable> | null>(null);
-const $batchModal = ref<InstanceType<typeof BatchPlaylistModal> | null>(null);
+const $dataTable = useTemplateRef('$dataTable');
+const $batchModal = useTemplateRef('$batchModal');
 
 // Cargar playlists disponibles
 const loadPlaylists = async () => {
