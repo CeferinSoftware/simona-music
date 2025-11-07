@@ -116,7 +116,15 @@
                         </option>
                     </select>
                 </div>
-                <div>
+                <div class="d-flex gap-2">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-secondary"
+                        @click="searchNow"
+                    >
+                        <icon :icon="IconSearch" />
+                        {{ $gettext('Buscar') }}
+                    </button>
                     <button
                         v-if="selectedItems.length > 0"
                         type="button"
@@ -403,6 +411,11 @@ const onFilterChange = useDebounceFn(() => {
     $dataTable.value?.refresh();
 }, 300);
 
+const searchNow = () => {
+    console.log('Buscando con filtros:', filters.value);
+    $dataTable.value?.refresh();
+};
+
 const onRowSelected = (items: MediaFile[]) => {
     selectedItems.value = items;
 };
@@ -532,6 +545,11 @@ const catalogoFields = computed<DataTableField<MediaFile>[]>(() => [
 onMounted(() => {
     loadPlaylists();
     loadFilters();
+    // Cargar datos iniciales
+    setTimeout(() => {
+        console.log('Cargando catálogo inicial...');
+        $dataTable.value?.refresh();
+    }, 500);
 });
 </script>
 
