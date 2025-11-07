@@ -141,7 +141,7 @@
             <!-- Tabla de Resultados -->
             <data-table
                 id="catalogo_terraza_table"
-                :ref="(el) => $dataTable = el"
+                ref="$dataTable"
                 selectable
                 paginated
                 :fields="catalogoFields"
@@ -246,12 +246,12 @@
             </data-table>
         </div>
 
-        <batch-playlist-modal :ref="(el) => $batchModal = el" />
+        <batch-playlist-modal ref="$batchModal" />
     </card-page>
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, shallowRef} from 'vue';
+import {ref, computed, onMounted} from 'vue';
 import {useAxios} from '~/vendor/axios';
 import {useTranslate} from '~/vendor/gettext';
 import {getStationApiUrl} from '~/router.ts';
@@ -312,8 +312,8 @@ const activePlaylistId = ref<number | string>('');
 const selectedItems = ref<MediaFile[]>([]);
 const adding = ref(false);
 
-const $dataTable = shallowRef<InstanceType<typeof DataTable> | null>(null);
-const $batchModal = shallowRef<InstanceType<typeof BatchPlaylistModal> | null>(null);
+const $dataTable = ref<InstanceType<typeof DataTable> | null>(null);
+const $batchModal = ref<InstanceType<typeof BatchPlaylistModal> | null>(null);
 
 // Cargar playlists disponibles
 const loadPlaylists = async () => {
