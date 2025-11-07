@@ -5,7 +5,7 @@
         :current-song="currentSong"
         :station-short-name="stationShortName"
         :display-mode="displayMode"
-        :audio-element="audioElement"
+        :now-playing-props="nowPlayingProps"
     />
 
     <!-- Normal Player Mode -->

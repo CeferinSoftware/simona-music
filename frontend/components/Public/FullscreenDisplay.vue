@@ -23,10 +23,16 @@
             v-else
             class="visualization-container"
         >
-            <canvas
-                ref="visualizationCanvas"
-                class="visualization-canvas"
-            />
+            <div class="waveform-placeholder">
+                <div class="pulse-circles">
+                    <div
+                        v-for="i in 3"
+                        :key="i"
+                        class="pulse-circle"
+                        :style="{ animationDelay: `${i * 0.3}s` }"
+                    />
+                </div>
+            </div>
         </div>
 
         <!-- Song Info Overlay (sutil) -->
@@ -46,13 +52,22 @@
                 </div>
             </transition>
         </div>
+
+        <!-- Hidden audio player for streaming -->
+        <div style="display: none;">
+            <radio-player
+                v-bind="nowPlayingProps"
+                @np_updated="onNowPlayingUpdate"
+            />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import {computed, ref, watch, onMounted, onUnmounted} from 'vue';
+import {computed, ref} from 'vue';
 import QRScannerWidget from './QRScannerWidget.vue';
-import {useAudioAnalyzer} from '~/functions/useAudioAnalyzer';
+import RadioPlayer from './Player.vue';
+import {ApiNowPlaying} from '~/entities/ApiInterfaces';
 
 interface Song {
     id: string;
@@ -65,20 +80,17 @@ interface FullscreenDisplayProps {
     currentSong: Song | null;
     stationShortName: string;
     displayMode: 'videoclips' | 'waveform';
-    audioElement?: HTMLAudioElement;
+    nowPlayingProps: any;
 }
 
 const props = defineProps<FullscreenDisplayProps>();
 
-const visualizationCanvas = ref<HTMLCanvasElement | null>(null);
-let animationId: number | null = null;
-let audioContext: AudioContext | null = null;
-let analyser: AnalyserNode | null = null;
-let dataArray: Uint8Array | null = null;
+const localNp = ref<ApiNowPlaying | null>(null);
 
 // Request URL for QR code
 const requestUrl = computed(() => {
-    return `${window.location.origin}/public/${props.stationShortName}`;
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/public/${props.stationShortName}`;
 });
 
 // Current video URL
@@ -95,13 +107,13 @@ const embedUrl = computed(() => {
     // YouTube
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
         const videoId = extractYouTubeId(url);
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1`;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1`;
     }
 
     // Vimeo
     if (url.includes('vimeo.com')) {
         const videoId = extractVimeoId(url);
-        return `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0`;
+        return `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0&loop=1`;
     }
 
     return url;
@@ -119,99 +131,10 @@ function extractVimeoId(url: string): string {
     return match ? match[1] : '';
 }
 
-// Audio Visualization Setup
-function setupVisualization() {
-    if (!props.audioElement || !visualizationCanvas.value) return;
-
-    try {
-        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const source = audioContext.createMediaElementSource(props.audioElement);
-        analyser = audioContext.createAnalyser();
-        
-        analyser.fftSize = 256;
-        const bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
-
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-
-        drawVisualization();
-    } catch (error) {
-        console.error('Error setting up audio visualization:', error);
-    }
+function onNowPlayingUpdate(np: ApiNowPlaying) {
+    localNp.value = np;
+    console.log('Now Playing Updated:', np);
 }
-
-function drawVisualization() {
-    if (!visualizationCanvas.value || !analyser || !dataArray) return;
-
-    const canvas = visualizationCanvas.value;
-    const canvasCtx = canvas.getContext('2d');
-    if (!canvasCtx) return;
-
-    const WIDTH = canvas.width = window.innerWidth;
-    const HEIGHT = canvas.height = window.innerHeight;
-
-    animationId = requestAnimationFrame(drawVisualization);
-
-    analyser.getByteFrequencyData(dataArray);
-
-    // Gradient background
-    const gradient = canvasCtx.createLinearGradient(0, 0, 0, HEIGHT);
-    gradient.addColorStop(0, '#0f172a');
-    gradient.addColorStop(1, '#1e293b');
-    canvasCtx.fillStyle = gradient;
-    canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
-
-    const barWidth = (WIDTH / dataArray.length) * 2.5;
-    let barHeight;
-    let x = 0;
-
-    for (let i = 0; i < dataArray.length; i++) {
-        barHeight = (dataArray[i] / 255) * HEIGHT * 0.8;
-
-        // Bar gradient
-        const barGradient = canvasCtx.createLinearGradient(0, HEIGHT - barHeight, 0, HEIGHT);
-        barGradient.addColorStop(0, `hsl(${i * 1.5 + 200}, 100%, 60%)`);
-        barGradient.addColorStop(1, `hsl(${i * 1.5 + 200}, 100%, 40%)`);
-        
-        canvasCtx.fillStyle = barGradient;
-        canvasCtx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
-
-        x += barWidth + 1;
-    }
-}
-
-function cleanupVisualization() {
-    if (animationId) {
-        cancelAnimationFrame(animationId);
-    }
-    if (audioContext) {
-        audioContext.close();
-    }
-}
-
-// Watch for changes
-watch(() => props.currentSong, (newSong) => {
-    // Song changed, video will auto-reload due to :key binding
-}, { deep: true });
-
-watch(() => props.displayMode, (mode) => {
-    if (mode === 'waveform' && !currentVideoUrl.value) {
-        setupVisualization();
-    } else {
-        cleanupVisualization();
-    }
-});
-
-onMounted(() => {
-    if (props.displayMode === 'waveform' && !currentVideoUrl.value) {
-        setupVisualization();
-    }
-});
-
-onUnmounted(() => {
-    cleanupVisualization();
-});
 </script>
 
 <style scoped>
@@ -247,12 +170,44 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     z-index: 1;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
-.visualization-canvas {
+.waveform-placeholder {
     width: 100%;
     height: 100%;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pulse-circles {
+    position: relative;
+    width: 300px;
+    height: 300px;
+}
+
+.pulse-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border: 3px solid rgba(59, 130, 246, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 3s ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.3);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
 }
 
 .song-info-overlay {
