@@ -141,7 +141,7 @@
             <!-- Tabla de Resultados -->
             <data-table
                 id="catalogo_terraza_table"
-                ref="$dataTable"
+                :ref="(el) => $dataTable = el"
                 selectable
                 paginated
                 :fields="catalogoFields"
@@ -246,7 +246,7 @@
             </data-table>
         </div>
 
-        <batch-playlist-modal ref="$batchModal" />
+        <batch-playlist-modal :ref="(el) => $batchModal = el" />
     </card-page>
 </template>
 
