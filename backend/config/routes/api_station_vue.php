@@ -10,6 +10,11 @@ use Slim\Routing\RouteCollectorProxy;
 
 return static function (RouteCollectorProxy $app) {
     $app->group('/vue', function (RouteCollectorProxy $group) {
+        $group->get('/catalogo', Controller\Api\Stations\Vue\CatalogoAction::class)
+            ->setName('api:vue:stations:catalogo')
+            ->add(new Middleware\StationSupportsFeature(StationFeatures::Media))
+            ->add(new Middleware\Permissions(StationPermissions::Broadcasting, true));
+
         $group->get('/files', Controller\Api\Stations\Vue\FilesAction::class)
             ->setName('api:vue:stations:files:index')
             ->add(new Middleware\StationSupportsFeature(StationFeatures::Media))

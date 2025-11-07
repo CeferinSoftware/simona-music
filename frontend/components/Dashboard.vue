@@ -116,6 +116,9 @@
                 </div>
             </card-page>
 
+            <!-- Control DJ Global Multi-Terrazas -->
+            <terrazas-control v-if="showAdmin" />
+
             <card-page header-id="hdr_stations">
                 <template #header="{id}">
                     <div class="d-flex flex-wrap align-items-center">
@@ -276,6 +279,7 @@ import {useQuery} from "@tanstack/vue-query";
 import {userAllowed} from "~/acl.ts";
 import {useAzuraCastDashboardGlobals} from "~/vendor/azuracast.ts";
 import DashboardNoSidebar from "~/components/Layout/DashboardNoSidebar.vue";
+import TerrazasControl from "~/components/Stations/TerrazasControl.vue";
 
 const {showCharts, showAlbumArt} = useAzuraCastDashboardGlobals();
 

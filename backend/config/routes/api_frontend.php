@@ -88,6 +88,11 @@ return static function (RouteCollectorProxy $group) {
                         ->setName('api:frontend:dashboard:stations');
                 }
             );
+
+            $group->post(
+                '/batch/add-media-to-playlists',
+                Controller\Api\Admin\BatchActions\AddMediaToPlaylistsAction::class
+            )->setName('api:frontend:batch:add-media-to-playlists');
         }
     )->add(Middleware\RequireLogin::class);
 };

@@ -55,6 +55,14 @@ export function useStationsMenu(): ReactiveMenu {
                             name: 'stations:branding'
                         },
                         visible: userAllowedForStation(StationPermissions.Profile)
+                    },
+                    {
+                        key: 'screens',
+                        label: computed(() => $gettext('Pantallas')),
+                        url: {
+                            name: 'stations:screens'
+                        },
+                        visible: userAllowedForStation(StationPermissions.Profile)
                     }
                 ]
             };
@@ -74,6 +82,14 @@ export function useStationsMenu(): ReactiveMenu {
                 icon: IconLibraryMusic,
                 visible: station.value.features.media,
                 items: [
+                    {
+                        key: 'catalogo',
+                        label: computed(() => $gettext('Catálogo Musical')),
+                        url: {
+                            name: 'stations:catalogo'
+                        },
+                        visible: userAllowedForStation(StationPermissions.Broadcasting)
+                    },
                     {
                         key: 'music_files',
                         label: computed(() => $gettext('Music Files')),

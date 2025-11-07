@@ -17,9 +17,19 @@ export default function useStationsRoutes(): RouteRecordRaw[] {
                     name: 'stations:branding'
                 },
                 {
+                    path: 'screens',
+                    component: () => import('~/components/Stations/Screens.vue'),
+                    name: 'stations:screens'
+                },
+                {
                     path: 'bulk-media',
                     component: () => import('~/components/Stations/BulkMedia.vue'),
                     name: 'stations:bulk-media'
+                },
+                {
+                    path: 'catalogo',
+                    component: () => import('~/components/Stations/CatalogoWrapper.vue'),
+                    name: 'stations:catalogo'
                 },
                 {
                     path: 'fallback',

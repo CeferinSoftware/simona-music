@@ -1,5 +1,9 @@
 <template>
     <div class="row-of-cards">
+        <!-- Custom Colors and Logo -->
+        <station-branding :station-id="stationId" />
+
+        <!-- Custom Assets -->
         <section
             class="card"
             role="region"
@@ -38,7 +42,12 @@
 <script setup lang="ts">
 import BrandingForm from "~/components/Stations/Branding/BrandingForm.vue";
 import CustomAssetForm from "~/components/Admin/Branding/CustomAssetForm.vue";
+import StationBranding from "~/components/Stations/StationBranding.vue";
 import {getStationApiUrl} from "~/router";
+import {useRoute} from 'vue-router';
+
+const route = useRoute();
+const stationId = Number(route.params.station_id);
 
 const profileEditUrl = getStationApiUrl('/profile/edit');
 const backgroundApiUrl = getStationApiUrl('/custom_assets/background');

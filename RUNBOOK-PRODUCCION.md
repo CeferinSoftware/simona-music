@@ -29,6 +29,7 @@ Guía única para desplegar, actualizar y diagnosticar Simona Music (fork de Azu
 - Fixes de código:
   - `backend/config/services.php`: `serverVersion = mariadb-11.4.0` para Docker
   - `AbstractDatabaseCommand.php`: añade `--ssl-mode=DISABLED` y `--ssl=0` a mariadb/mariadb-dump
+- `AGENTE-IA-HANDOFF.md` (guía para agentes IA: flujo, comandos críticos, branding y problemas conocidos)
 
 ### Flujo de trabajo (dev → prod)
 1) Editar en local (frontend/backend/translations).

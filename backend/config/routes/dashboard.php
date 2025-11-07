@@ -28,6 +28,7 @@ return static function (RouteCollectorProxy $app) {
                         'stations:index:index' => '',
                         'stations:branding' => '/branding',
                         'stations:bulk-media' => '/bulk-media',
+                        'stations:catalogo' => '/catalogo',
                         'stations:fallback' => '/fallback',
                         'stations:files:index' => '/files[/{fspath}]',
                         'stations:hls_streams:index' => '/hls_streams',

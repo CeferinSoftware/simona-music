@@ -41,6 +41,13 @@ return static function (RouteCollectorProxy $app) {
                 ->setName('public:embedrequests')
                 ->add(new Middleware\StationSupportsFeature(App\Enums\StationFeatures::Requests));
 
+            $group->get('/qr-request', Controller\Frontend\PublicPages\QRRequestAction::class)
+                ->setName('public:qr-request')
+                ->add(new Middleware\StationSupportsFeature(App\Enums\StationFeatures::Requests));
+
+            $group->get('/screen/{screen_id}', Controller\Frontend\PublicPages\ScreenAction::class)
+                ->setName('public:screen');
+
             $group->get('/playlist[.{format}]', Controller\Frontend\PublicPages\PlaylistAction::class)
                 ->setName('public:playlist');
 

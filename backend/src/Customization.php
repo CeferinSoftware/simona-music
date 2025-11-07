@@ -102,7 +102,41 @@ final class Customization
 
     public function getStationCustomPublicCss(Station $station): string
     {
-        $publicCss = $station->branding_config->public_custom_css ?? '';
+        $branding = $station->branding_config;
+        $publicCss = '';
+
+        // Inject CSS variables from branding configuration
+        if (
+            $branding->primary_color ||
+            $branding->secondary_color ||
+            $branding->background_color ||
+            $branding->text_color
+        ) {
+            $publicCss .= ':root {' . PHP_EOL;
+            
+            if ($branding->primary_color) {
+                $publicCss .= "  --bs-primary: {$branding->primary_color};" . PHP_EOL;
+                $publicCss .= "  --bs-primary-rgb: " . $this->hexToRgb($branding->primary_color) . ";" . PHP_EOL;
+            }
+            
+            if ($branding->secondary_color) {
+                $publicCss .= "  --bs-secondary: {$branding->secondary_color};" . PHP_EOL;
+                $publicCss .= "  --bs-secondary-rgb: " . $this->hexToRgb($branding->secondary_color) . ";" . PHP_EOL;
+            }
+            
+            if ($branding->background_color) {
+                $publicCss .= "  --bs-body-bg: {$branding->background_color};" . PHP_EOL;
+            }
+            
+            if ($branding->text_color) {
+                $publicCss .= "  --bs-body-color: {$branding->text_color};" . PHP_EOL;
+            }
+            
+            $publicCss .= '}' . PHP_EOL;
+        }
+
+        // Add custom CSS from configuration
+        $publicCss .= $branding->public_custom_css ?? '';
 
         $background = AssetTypes::Background->createObject($this->environment, $station);
 
@@ -117,6 +151,21 @@ final class Customization
         }
 
         return $publicCss;
+    }
+
+    private function hexToRgb(string $hex): string
+    {
+        $hex = ltrim($hex, '#');
+        
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+        
+        return "{$r}, {$g}, {$b}";
     }
 
     /**

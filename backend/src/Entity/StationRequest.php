@@ -45,6 +45,15 @@ final class StationRequest implements
     #[ORM\Column(length: 40)]
     public readonly string $ip;
 
+    #[ORM\Column(length: 100, nullable: true)]
+    public ?string $requester_name = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    public ?string $requester_avatar = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    public ?string $comment = null;
+
     #[ORM\Column(type: 'datetime_immutable', precision: 6, nullable: true)]
     public ?DateTimeImmutable $played_at = null {
         set(DateTimeImmutable|string|null $value) => Time::toNullableUtcCarbonImmutable($value);
@@ -54,7 +63,10 @@ final class StationRequest implements
         Station $station,
         StationMedia $track,
         ?string $ip = null,
-        bool $skipDelay = false
+        bool $skipDelay = false,
+        ?string $requesterName = null,
+        ?string $requesterAvatar = null,
+        ?string $comment = null
     ) {
         $this->station = $station;
         $this->track = $track;
@@ -62,6 +74,9 @@ final class StationRequest implements
         $this->timestamp = Time::nowUtc();
         $this->skip_delay = $skipDelay;
         $this->ip = $this->truncateString($ip ?? $_SERVER['REMOTE_ADDR'], 40);
+        $this->requester_name = $requesterName ? $this->truncateString($requesterName, 100) : null;
+        $this->requester_avatar = $requesterAvatar ? $this->truncateString($requesterAvatar, 500) : null;
+        $this->comment = $comment;
     }
 
     public function shouldPlayNow(?DateTimeImmutable $now = null): bool
@@ -80,5 +95,22 @@ final class StationRequest implements
             : Time::nowUtc();
 
         return $now->subMinutes($thresholdMins)->gt($this->timestamp);
+    }
+
+    /**
+     * Get the current status of the request
+     * Returns: 'pending', 'queued', 'accepted', or 'rejected'
+     */
+    public function getStatus(): string
+    {
+        if ($this->played_at !== null) {
+            return 'accepted';
+        }
+
+        if ($this->shouldPlayNow()) {
+            return 'queued';
+        }
+
+        return 'pending';
     }
 }

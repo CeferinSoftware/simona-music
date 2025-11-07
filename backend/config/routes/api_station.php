@@ -38,6 +38,10 @@ return static function (RouteCollectorProxy $group) {
                 ->add(new Middleware\StationSupportsFeature(StationFeatures::Requests))
                 ->add(new Middleware\RateLimit('api', 5, 2));
 
+            $group->get('/request-status/{request_id}', Controller\Api\Stations\Requests\StatusAction::class)
+                ->add(new Middleware\StationSupportsFeature(StationFeatures::Requests))
+                ->setName('api:requests:status');
+
             // On-Demand Streaming
             $group->get('/ondemand', Controller\Api\Stations\OnDemand\ListAction::class)
                 ->setName('api:stations:ondemand:list')
@@ -58,6 +62,31 @@ return static function (RouteCollectorProxy $group) {
                 function (RouteCollectorProxy $group) {
                     $group->get('/dashboard', Controller\Api\Stations\GetDashboardAction::class)
                         ->add(new Middleware\Permissions(StationPermissions::View, true));
+
+                    $group->get('/branding', Controller\Api\Stations\GetBrandingAction::class)
+                        ->setName('api:stations:branding:get')
+                        ->add(new Middleware\Permissions(StationPermissions::View, true));
+
+                    $group->put('/branding', Controller\Api\Stations\PutBrandingAction::class)
+                        ->setName('api:stations:branding:put')
+                        ->add(new Middleware\Permissions(StationPermissions::ManageProfile, true));
+
+                    // Screens
+                    $group->get('/screens', Controller\Api\Stations\Screens\ListAction::class)
+                        ->setName('api:stations:screens:list')
+                        ->add(new Middleware\Permissions(StationPermissions::View, true));
+
+                    $group->post('/screens', Controller\Api\Stations\Screens\CreateAction::class)
+                        ->setName('api:stations:screens:create')
+                        ->add(new Middleware\Permissions(StationPermissions::ManageProfile, true));
+
+                    $group->put('/screens/{screen_id}', Controller\Api\Stations\Screens\UpdateAction::class)
+                        ->setName('api:stations:screens:update')
+                        ->add(new Middleware\Permissions(StationPermissions::ManageProfile, true));
+
+                    $group->delete('/screens/{screen_id}', Controller\Api\Stations\Screens\DeleteAction::class)
+                        ->setName('api:stations:screens:delete')
+                        ->add(new Middleware\Permissions(StationPermissions::ManageProfile, true));
 
                     $group->map(
                         ['GET', 'POST'],

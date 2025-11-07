@@ -158,12 +158,27 @@ final class SubmitAction implements SingleActionInterface
         }
 
         // Save request locally.
-        $record = new StationRequest($station, $mediaItem, $ip);
+        $parsedBody = (array)$request->getParsedBody();
+        $requesterName = $parsedBody['requester_name'] ?? null;
+        $requesterAvatar = $parsedBody['requester_avatar'] ?? null;
+        $comment = $parsedBody['comment'] ?? null;
+
+        $record = new StationRequest(
+            $station,
+            $mediaItem,
+            $ip,
+            false,
+            $requesterName,
+            $requesterAvatar,
+            $comment
+        );
         $this->em->persist($record);
         $this->em->flush();
 
-        return $response->withJson(
-            new Status(true, __('Your request has been submitted and will be played soon.'))
-        );
+        return $response->withJson([
+            'success' => true,
+            'message' => __('Your request has been submitted and will be played soon.'),
+            'request_id' => $record->getIdRequired(),
+        ]);
     }
 }

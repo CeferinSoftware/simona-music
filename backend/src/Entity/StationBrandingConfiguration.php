@@ -38,6 +38,40 @@ final class StationBrandingConfiguration extends AbstractArrayEntity
     }
 
     #[OA\Property]
+    public ?string $primary_color = null {
+        set => Types::stringOrNull($value, true);
+    }
+
+    #[OA\Property]
+    public ?string $secondary_color = null {
+        set => Types::stringOrNull($value, true);
+    }
+
+    #[OA\Property]
+    public ?string $background_color = null {
+        set => Types::stringOrNull($value, true);
+    }
+
+    #[OA\Property]
+    public ?string $text_color = null {
+        set => Types::stringOrNull($value, true);
+    }
+
+    #[OA\Property]
+    public ?string $logo_url = null {
+        set => Types::stringOrNull($value, true);
+    }
+
+    public function getLogoUrlAsUri(): ?UriInterface
+    {
+        return Urls::tryParseUserUrl(
+            $this->logo_url,
+            'Station Logo URL',
+            false
+        );
+    }
+
+    #[OA\Property]
     public ?string $offline_text = null {
         set => Types::stringOrNull($value, true);
     }
