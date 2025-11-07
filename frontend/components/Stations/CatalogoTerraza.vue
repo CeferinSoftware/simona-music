@@ -349,7 +349,7 @@ const loadFilters = async () => {
 const catalogoItemProvider = async (options: any) => {
     try {
         const params: any = {
-            searchPhrase: filters.value.search,
+            searchPhrase: filters.value.search || '',
             currentDir: ''
         };
 
@@ -361,11 +361,11 @@ const catalogoItemProvider = async (options: any) => {
             .map((item: any) => ({
                 unique_id: item.media.unique_id,
                 id: item.media.id,
-                title: item.media.title,
-                artist: item.media.artist,
-                album: item.media.album,
-                genre: item.media.genre,
-                art: item.media.art,
+                title: item.media.title || '',
+                artist: item.media.artist || '',
+                album: item.media.album || null,
+                genre: item.media.genre || null,
+                art: item.media.art || null,
                 play_count: item.media.play_count || 0,
                 links: item.media.links
             }));
@@ -380,7 +380,7 @@ const catalogoItemProvider = async (options: any) => {
         }
 
         if (filters.value.popularity) {
-            const maxPlayCount = Math.max(...mediaFiles.map((m: MediaFile) => m.play_count));
+            const maxPlayCount = Math.max(...mediaFiles.map((m: MediaFile) => m.play_count), 1);
             mediaFiles = mediaFiles.filter((m: MediaFile) => {
                 const percent = maxPlayCount > 0 ? (m.play_count / maxPlayCount) * 100 : 0;
                 if (filters.value.popularity === 'high') return percent > 66;
@@ -390,9 +390,11 @@ const catalogoItemProvider = async (options: any) => {
             });
         }
 
+        console.log('Catálogo cargado:', mediaFiles.length, 'canciones');
         return mediaFiles;
     } catch (error) {
         console.error('Error al cargar catálogo:', error);
+        notifyError($gettext('Error al cargar el catálogo musical.'));
         return [];
     }
 };
