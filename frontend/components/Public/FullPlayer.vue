@@ -5,7 +5,7 @@
         :current-song="currentSong"
         :station-short-name="stationShortName"
         :display-mode="displayMode"
-        :now-playing-props="nowPlayingProps"
+        :radio-player-props="radioPlayerProps"
         :is-loading="!currentNp"
     />
 
@@ -154,6 +154,16 @@ const currentSong = computed(() => {
     console.log('FullPlayer: Raw song data =', currentNp.value.now_playing.song);
     
     return song;
+});
+
+// Props to pass to the RadioPlayer inside FullscreenDisplay
+// Use the original nowPlayingProps from backend, add autoplay for fullscreen mode
+const radioPlayerProps = computed(() => {
+    return {
+        nowPlayingProps: props.nowPlayingProps, // Keep original {stationShortName, useStatic, useSse}
+        showAlbumArt: props.showAlbumArt,
+        autoplay: isFullscreenMode.value // Enable autoplay in fullscreen mode
+    };
 });
 
 const onNowPlayingUpdate = (newNowPlaying: ApiNowPlaying) => {

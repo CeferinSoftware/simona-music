@@ -72,7 +72,7 @@
         <!-- Hidden audio player for streaming -->
         <div style="display: none;">
             <radio-player
-                v-bind="nowPlayingProps"
+                v-bind="radioPlayerProps"
                 @np_updated="onNowPlayingUpdate"
             />
         </div>
@@ -96,7 +96,7 @@ interface FullscreenDisplayProps {
     currentSong: Song | null;
     stationShortName: string;
     displayMode: 'videoclips' | 'waveform';
-    nowPlayingProps: any;
+    radioPlayerProps: any; // PlayerProps from Player.vue
     isLoading?: boolean;
 }
 
