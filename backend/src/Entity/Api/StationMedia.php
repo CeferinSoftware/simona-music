@@ -89,6 +89,12 @@ class StationMedia
     #[OA\Property]
     public HashMap $extra_metadata;
 
+    #[OA\Property(
+        description: "URL of the video clip (YouTube, Vimeo, etc.) for this song",
+        example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    )]
+    public ?string $video_url = null;
+
     /**
      * @var StationMediaPlaylist[]
      */
@@ -120,6 +126,7 @@ class StationMedia
         $media->genre = $row['genre'];
         $media->isrc = $row['isrc'];
         $media->lyrics = $row['lyrics'] ?? null;
+        $media->video_url = $row['video_url'] ?? null;
 
         $media->length = Types::int($row['length']);
         $media->length_text = self::getLengthText($row['length']);

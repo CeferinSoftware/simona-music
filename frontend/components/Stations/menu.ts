@@ -83,14 +83,6 @@ export function useStationsMenu(): ReactiveMenu {
                 visible: station.value.features.media,
                 items: [
                     {
-                        key: 'catalogo',
-                        label: computed(() => $gettext('Catálogo Musical')),
-                        url: {
-                            name: 'stations:catalogo'
-                        },
-                        visible: userAllowedForStation(StationPermissions.Broadcasting)
-                    },
-                    {
                         key: 'music_files',
                         label: computed(() => $gettext('Music Files')),
                         url: {

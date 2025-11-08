@@ -27,11 +27,6 @@ export default function useStationsRoutes(): RouteRecordRaw[] {
                     name: 'stations:bulk-media'
                 },
                 {
-                    path: 'catalogo',
-                    component: () => import('~/components/Stations/CatalogoWrapper.vue'),
-                    name: 'stations:catalogo'
-                },
-                {
                     path: 'fallback',
                     component: () => import('~/components/Stations/Fallback.vue'),
                     name: 'stations:fallback'
