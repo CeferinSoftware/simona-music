@@ -132,25 +132,6 @@
                     </span>
                 </template>
 
-                <template #cell(media.play_count)="{ item }">
-                    <div class="text-center" v-if="item.media">
-                        <div class="small">
-                            {{ item.media.play_count || 0 }}
-                        </div>
-                        <div
-                            v-if="item.media.play_count"
-                            class="progress"
-                            style="height: 3px;"
-                        >
-                            <div
-                                class="progress-bar"
-                                :class="getPopularityClass(item.media.play_count)"
-                                :style="{width: getPopularityPercent(item.media.play_count) + '%'}"
-                            />
-                        </div>
-                    </div>
-                </template>
-
                 <template #cell(actions)="{ item }">
                     <div class="btn-group btn-group-sm">
                         <button
@@ -270,18 +251,6 @@ const onRowSelected = (items: MediaRow[]) => {
     selectedItems.value = items;
 };
 
-const getPopularityPercent = (playCount: number): number => {
-    // Calcular porcentaje relativo (esto es simplificado, idealmente se calcularía contra el máximo de la estación)
-    return Math.min((playCount / 100) * 100, 100);
-};
-
-const getPopularityClass = (playCount: number): string => {
-    const percent = getPopularityPercent(playCount);
-    if (percent > 66) return 'bg-success';
-    if (percent > 33) return 'bg-warning';
-    return 'bg-info';
-};
-
 const addToPlaylist = async () => {
     if (!activePlaylistId.value || selectedItems.value.length === 0) {
         return;
@@ -386,12 +355,6 @@ const catalogoFields = computed<DataTableField<MediaRow>[]>(() => [
         class: 'shrink'
     },
     {
-        key: 'media.play_count',
-        label: $gettext('Popularidad'),
-        sortable: true,
-        class: 'shrink text-center'
-    },
-    {
         key: 'actions',
         label: $gettext('Acciones'),
         sortable: false,
@@ -403,9 +366,3 @@ onMounted(() => {
     loadPlaylists();
 });
 </script>
-
-<style scoped>
-.progress {
-    margin-top: 2px;
-}
-</style>
