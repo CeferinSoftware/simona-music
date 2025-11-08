@@ -269,7 +269,6 @@ import {
 import {useNotify} from '~/components/Common/Toasts/useNotify.ts';
 import {usePlayerStore} from '~/functions/usePlayerStore.ts';
 import {useDebounceFn} from '@vueuse/core';
-import type {ComponentPublicInstance} from 'vue';
 
 interface MediaFile {
     unique_id: string;
@@ -313,8 +312,8 @@ const activePlaylistId = ref<number | string>('');
 const selectedItems = ref<MediaFile[]>([]);
 const adding = ref(false);
 
-const $dataTable = ref<ComponentPublicInstance<typeof DataTable> | null>(null);
-const $batchModal = ref<ComponentPublicInstance<typeof BatchPlaylistModal> | null>(null);
+const $dataTable = ref();
+const $batchModal = ref();
 
 // Cargar playlists disponibles
 const loadPlaylists = async () => {
