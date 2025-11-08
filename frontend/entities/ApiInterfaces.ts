@@ -1163,6 +1163,11 @@ export type ApiStationMedia = ApiHasSongFields &
     custom_fields?: HashMap;
     /** A hash-map array represented as an object. */
     extra_metadata?: HashMap;
+    /**
+     * URL of the video clip (YouTube, Vimeo, etc.) for this song
+     * @example "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+     */
+    video_url?: string | null;
     playlists?: (ApiStationMediaPlaylist | number)[];
   };
 
