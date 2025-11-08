@@ -95,6 +95,9 @@ const requestUrl = computed(() => {
 
 // Current video URL
 const currentVideoUrl = computed(() => {
+    console.log('FullscreenDisplay: currentSong =', props.currentSong);
+    console.log('FullscreenDisplay: video_url =', props.currentSong?.video_url);
+    console.log('FullscreenDisplay: displayMode =', props.displayMode);
     return props.currentSong?.video_url || null;
 });
 

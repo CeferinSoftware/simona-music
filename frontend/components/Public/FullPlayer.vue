@@ -123,17 +123,26 @@ const displayMode = computed<'videoclips' | 'waveform'>(() => {
 });
 
 const currentSong = computed(() => {
-    if (!currentNp.value?.now_playing?.song) return null;
+    if (!currentNp.value?.now_playing?.song) {
+        console.log('FullPlayer: No song in currentNp');
+        return null;
+    }
     
-    return {
+    const song = {
         id: currentNp.value.now_playing.song.id || '',
         title: currentNp.value.now_playing.song.title || '',
         artist: currentNp.value.now_playing.song.artist || '',
         video_url: (currentNp.value.now_playing.song as any).video_url || null
     };
+    
+    console.log('FullPlayer: currentSong =', song);
+    console.log('FullPlayer: Raw song data =', currentNp.value.now_playing.song);
+    
+    return song;
 });
 
 const onNowPlayingUpdate = (newNowPlaying: ApiNowPlaying) => {
+    console.log('FullPlayer: NowPlaying updated =', newNowPlaying);
     history.value = newNowPlaying?.song_history;
     currentNp.value = newNowPlaying;
 }
