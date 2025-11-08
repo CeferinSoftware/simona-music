@@ -268,7 +268,8 @@ import {
 } from '~/components/Common/Icons/icons.ts';
 import {useNotify} from '~/components/Common/Toasts/useNotify.ts';
 import {usePlayerStore} from '~/functions/usePlayerStore.ts';
-import {useDebounceFn} from '@vueuse/core';
+import {useApiItemProvider} from '~/functions/useApiItemProvider';
+import {queryKeyWithStation, QueryKeys} from '~/functions/queryKeys';
 
 interface MediaFile {
     unique_id: string;
@@ -297,6 +298,7 @@ const playerStore = usePlayerStore();
 
 const filesUrl = getStationApiUrl('/files');
 const playlistsUrl = getStationApiUrl('/playlists');
+const currentDir = ref('');
 
 const filters = ref({
     search: '',
@@ -353,67 +355,23 @@ const loadFilters = async () => {
     }
 };
 
-// Provider de datos con filtros
-const catalogoItemProvider = async (options: any) => {
-    try {
-        const params: any = {
-            searchPhrase: filters.value.search || '',
-            currentDir: ''
-        };
-
-        const {data} = await axios.get(filesUrl.value, {params});
-
-        // Filtrar solo archivos de media
-        let mediaFiles = data
-            .filter((item: any) => item.media)
-            .map((item: any) => ({
-                unique_id: item.media.unique_id,
-                id: item.media.id,
-                title: item.media.title || '',
-                artist: item.media.artist || '',
-                album: item.media.album || null,
-                genre: item.media.genre || null,
-                art: item.media.art || null,
-                play_count: item.media.play_count || 0,
-                links: item.media.links
-            }));
-
-        // Aplicar filtros adicionales
-        if (filters.value.genre) {
-            mediaFiles = mediaFiles.filter((m: MediaFile) => m.genre === filters.value.genre);
-        }
-
-        if (filters.value.artist) {
-            mediaFiles = mediaFiles.filter((m: MediaFile) => m.artist === filters.value.artist);
-        }
-
-        if (filters.value.popularity) {
-            const maxPlayCount = Math.max(...mediaFiles.map((m: MediaFile) => m.play_count), 1);
-            mediaFiles = mediaFiles.filter((m: MediaFile) => {
-                const percent = maxPlayCount > 0 ? (m.play_count / maxPlayCount) * 100 : 0;
-                if (filters.value.popularity === 'high') return percent > 66;
-                if (filters.value.popularity === 'medium') return percent > 33 && percent <= 66;
-                if (filters.value.popularity === 'low') return percent <= 33;
-                return true;
-            });
-        }
-
-        console.log('Catálogo cargado:', mediaFiles.length, 'canciones');
-        return mediaFiles;
-    } catch (error) {
-        console.error('Error al cargar catálogo:', error);
-        notifyError($gettext('Error al cargar el catálogo musical.'));
-        return [];
+// Provider de datos usando useApiItemProvider (igual que Media.vue)
+const catalogoItemProvider = useApiItemProvider(
+    filesUrl,
+    queryKeyWithStation([QueryKeys.StationMedia, 'files', currentDir]),
+    {
+        staleTime: 2 * 60 * 1000
+    },
+    (config) => {
+        config.params.currentDir = currentDir.value;
+        config.params.searchPhrase = filters.value.search || '';
+        return config;
     }
-};
-
-const onFilterChange = useDebounceFn(() => {
-    $dataTable.value?.refresh();
-}, 300);
+);
 
 const searchNow = () => {
     console.log('Buscando con filtros:', filters.value);
-    $dataTable.value?.refresh();
+    catalogoItemProvider.refresh();
 };
 
 const onRowSelected = (items: MediaFile[]) => {
@@ -455,7 +413,7 @@ const addToPlaylist = async () => {
 
         selectedItems.value = [];
         // Refrescar tabla para limpiar selección
-        $dataTable.value?.refresh();
+        catalogoItemProvider.refresh();
     } catch (error) {
         console.error('Error al añadir a playlist:', error);
         notifyError($gettext('Error al añadir canciones a la playlist.'));
@@ -546,11 +504,6 @@ const catalogoFields = computed<DataTableField<MediaFile>[]>(() => [
 onMounted(() => {
     loadPlaylists();
     loadFilters();
-    // Cargar datos iniciales
-    setTimeout(() => {
-        console.log('Cargando catálogo inicial...');
-        $dataTable.value?.refresh();
-    }, 500);
 });
 </script>
 
