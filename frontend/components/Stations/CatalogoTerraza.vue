@@ -173,6 +173,7 @@ import {ref, computed, onMounted, useTemplateRef} from 'vue';
 import {useAxios} from '~/vendor/axios';
 import {useTranslate} from '~/vendor/gettext';
 import {getStationApiUrl} from '~/router.ts';
+import {useRouter} from 'vue-router';
 import CardPage from '~/components/Common/CardPage.vue';
 import DataTable, {DataTableField} from '~/components/Common/DataTable.vue';
 import Icon from '~/components/Common/Icons/Icon.vue';
@@ -201,8 +202,10 @@ const {$gettext} = useTranslate();
 const {axios} = useAxios();
 const {notifySuccess, notifyError} = useNotify();
 const playerStore = usePlayerStore();
+const router = useRouter();
 
-const filesUrl = getStationApiUrl('/files');
+const filesUrl = getStationApiUrl('/files/list');
+const batchUrl = getStationApiUrl('/files/batch');
 const playlistsUrl = getStationApiUrl('/playlists');
 const currentDir = ref('');
 
@@ -259,7 +262,6 @@ const addToPlaylist = async () => {
     adding.value = true;
 
     try {
-        const batchUrl = getStationApiUrl('/files/batch');
         await axios.put(batchUrl.value, {
             'do': 'playlist',
             'playlists': [activePlaylistId.value],
@@ -294,7 +296,6 @@ const addSingleToPlaylist = async (item: MediaRow) => {
     adding.value = true;
 
     try {
-        const batchUrl = getStationApiUrl('/files/batch');
         await axios.put(batchUrl.value, {
             'do': 'playlist',
             'playlists': [activePlaylistId.value],
