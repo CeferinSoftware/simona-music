@@ -14,7 +14,7 @@
         <div class="card-body">
             <!-- Filtros -->
             <div class="row g-3 mb-4">
-                <div class="col-md-4">
+                <div class="col-md-12">
                     <label class="form-label">{{ $gettext('Buscar') }}</label>
                     <div class="input-group">
                         <span class="input-group-text">
@@ -25,71 +25,8 @@
                             type="text"
                             class="form-control"
                             :placeholder="$gettext('Título, artista o álbum')"
-                            @input="onFilterChange"
                         >
                     </div>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">{{ $gettext('Género') }}</label>
-                    <select
-                        v-model="filters.genre"
-                        class="form-select"
-                        @change="onFilterChange"
-                    >
-                        <option value="">
-                            {{ $gettext('Todos los géneros') }}
-                        </option>
-                        <option
-                            v-for="genre in availableGenres"
-                            :key="genre"
-                            :value="genre"
-                        >
-                            {{ genre }}
-                        </option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">{{ $gettext('Artista') }}</label>
-                    <select
-                        v-model="filters.artist"
-                        class="form-select"
-                        @change="onFilterChange"
-                    >
-                        <option value="">
-                            {{ $gettext('Todos los artistas') }}
-                        </option>
-                        <option
-                            v-for="artist in availableArtists"
-                            :key="artist"
-                            :value="artist"
-                        >
-                            {{ artist }}
-                        </option>
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">{{ $gettext('Popularidad') }}</label>
-                    <select
-                        v-model="filters.popularity"
-                        class="form-select"
-                        @change="onFilterChange"
-                    >
-                        <option value="">
-                            {{ $gettext('Todas') }}
-                        </option>
-                        <option value="high">
-                            {{ $gettext('Alta') }}
-                        </option>
-                        <option value="medium">
-                            {{ $gettext('Media') }}
-                        </option>
-                        <option value="low">
-                            {{ $gettext('Baja') }}
-                        </option>
-                    </select>
                 </div>
             </div>
 
@@ -289,14 +226,9 @@ const playlistsUrl = getStationApiUrl('/playlists');
 const currentDir = ref('');
 
 const filters = ref({
-    search: '',
-    genre: '',
-    artist: '',
-    popularity: ''
+    search: ''
 });
 
-const availableGenres = ref<string[]>([]);
-const availableArtists = ref<string[]>([]);
 const playlists = ref<Playlist[]>([]);
 const activePlaylistId = ref<number | string>('');
 const selectedItems = ref<MediaRow[]>([]);
@@ -312,34 +244,6 @@ const loadPlaylists = async () => {
         playlists.value = data;
     } catch (error) {
         console.error('Error al cargar playlists:', error);
-    }
-};
-
-// Cargar filtros (géneros y artistas únicos)
-const loadFilters = async () => {
-    try {
-        const {data} = await axios.get(filesUrl.value, {
-            params: {
-                searchPhrase: '',
-                currentDir: ''
-            }
-        });
-
-        // Extraer géneros y artistas únicos
-        const genres = new Set<string>();
-        const artists = new Set<string>();
-
-        data.forEach((item: any) => {
-            if (item.media) {
-                if (item.media.genre) genres.add(item.media.genre);
-                if (item.media.artist) artists.add(item.media.artist);
-            }
-        });
-
-        availableGenres.value = Array.from(genres).sort();
-        availableArtists.value = Array.from(artists).sort();
-    } catch (error) {
-        console.error('Error al cargar filtros:', error);
     }
 };
 
@@ -497,7 +401,6 @@ const catalogoFields = computed<DataTableField<MediaRow>[]>(() => [
 
 onMounted(() => {
     loadPlaylists();
-    loadFilters();
 });
 </script>
 
