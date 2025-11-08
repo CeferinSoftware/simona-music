@@ -205,8 +205,8 @@ import {
 } from '~/components/Common/Icons/icons.ts';
 import {useNotify} from '~/components/Common/Toasts/useNotify.ts';
 import {usePlayerStore} from '~/functions/usePlayerStore.ts';
-import {useApiItemProvider} from '~/functions/useApiItemProvider';
-import {queryKeyWithStation, QueryKeys} from '~/functions/queryKeys';
+import {useApiItemProvider} from '~/functions/dataTable/useApiItemProvider.ts';
+import {QueryKeys, queryKeyWithStation} from '~/entities/Queries.ts';
 import {FileListRequired} from '~/entities/StationMedia.ts';
 
 type MediaRow = FileListRequired;
