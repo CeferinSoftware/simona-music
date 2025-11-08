@@ -149,10 +149,10 @@
                 :per-page="20"
                 @row-selected="onRowSelected"
             >
-                <template #cell(art)="{ item }">
+                <template #cell(media.art)="{ item }">
                     <img
-                        v-if="item.art"
-                        :src="item.art"
+                        v-if="item.media?.art"
+                        :src="item.media.art"
                         alt="Album Art"
                         class="rounded"
                         style="width: 50px; height: 50px; object-fit: cover;"
@@ -169,46 +169,46 @@
                     </div>
                 </template>
 
-                <template #cell(title)="{ item }">
-                    <div>
+                <template #cell(media.title)="{ item }">
+                    <div v-if="item.media">
                         <div class="fw-bold">
-                            {{ item.title }}
+                            {{ item.media.title }}
                         </div>
                         <div class="text-muted small">
-                            {{ item.artist }}
+                            {{ item.media.artist }}
                         </div>
                     </div>
                 </template>
 
-                <template #cell(album)="{ item }">
+                <template #cell(media.album)="{ item }">
                     <div class="small">
-                        {{ item.album || '-' }}
+                        {{ item.media?.album || '-' }}
                     </div>
                 </template>
 
-                <template #cell(genre)="{ item }">
+                <template #cell(media.genre)="{ item }">
                     <span
-                        v-if="item.genre"
+                        v-if="item.media?.genre"
                         class="badge text-bg-secondary"
                     >
-                        {{ item.genre }}
+                        {{ item.media.genre }}
                     </span>
                 </template>
 
-                <template #cell(play_count)="{ item }">
-                    <div class="text-center">
+                <template #cell(media.play_count)="{ item }">
+                    <div class="text-center" v-if="item.media">
                         <div class="small">
-                            {{ item.play_count || 0 }}
+                            {{ item.media.play_count || 0 }}
                         </div>
                         <div
-                            v-if="item.play_count"
+                            v-if="item.media.play_count"
                             class="progress"
                             style="height: 3px;"
                         >
                             <div
                                 class="progress-bar"
-                                :class="getPopularityClass(item.play_count)"
-                                :style="{width: getPopularityPercent(item.play_count) + '%'}"
+                                :class="getPopularityClass(item.media.play_count)"
+                                :style="{width: getPopularityPercent(item.media.play_count) + '%'}"
                             />
                         </div>
                     </div>
@@ -270,21 +270,9 @@ import {useNotify} from '~/components/Common/Toasts/useNotify.ts';
 import {usePlayerStore} from '~/functions/usePlayerStore.ts';
 import {useApiItemProvider} from '~/functions/useApiItemProvider';
 import {queryKeyWithStation, QueryKeys} from '~/functions/queryKeys';
+import {FileListRequired} from '~/entities/StationMedia.ts';
 
-interface MediaFile {
-    unique_id: string;
-    id: number;
-    title: string;
-    artist: string;
-    album: string | null;
-    genre: string | null;
-    art: string | null;
-    play_count: number;
-    links: {
-        play: string;
-        self: string;
-    };
-}
+type MediaRow = FileListRequired;
 
 interface Playlist {
     id: number;
@@ -311,7 +299,7 @@ const availableGenres = ref<string[]>([]);
 const availableArtists = ref<string[]>([]);
 const playlists = ref<Playlist[]>([]);
 const activePlaylistId = ref<number | string>('');
-const selectedItems = ref<MediaFile[]>([]);
+const selectedItems = ref<MediaRow[]>([]);
 const adding = ref(false);
 
 const $dataTable = useTemplateRef('$dataTable');
@@ -356,14 +344,14 @@ const loadFilters = async () => {
 };
 
 // Provider de datos usando useApiItemProvider (igual que Media.vue)
-const catalogoItemProvider = useApiItemProvider(
+const catalogoItemProvider = useApiItemProvider<MediaRow>(
     filesUrl,
     queryKeyWithStation([QueryKeys.StationMedia, 'files', currentDir]),
     {
         staleTime: 2 * 60 * 1000
     },
     (config) => {
-        config.params.currentDir = currentDir.value;
+        config.params.currentDirectory = currentDir.value;
         config.params.searchPhrase = filters.value.search || '';
         return config;
     }
@@ -374,7 +362,7 @@ const searchNow = () => {
     catalogoItemProvider.refresh();
 };
 
-const onRowSelected = (items: MediaFile[]) => {
+const onRowSelected = (items: MediaRow[]) => {
     selectedItems.value = items;
 };
 
@@ -402,7 +390,9 @@ const addToPlaylist = async () => {
         await axios.put(batchUrl.value, {
             'do': 'playlist',
             'playlists': [activePlaylistId.value],
-            'files': selectedItems.value.map(item => item.unique_id)
+            'files': selectedItems.value
+                .filter(item => item.media !== null)
+                .map(item => item.media!.unique_id)
         });
 
         notifySuccess(
@@ -422,8 +412,8 @@ const addToPlaylist = async () => {
     }
 };
 
-const addSingleToPlaylist = async (item: MediaFile) => {
-    if (!activePlaylistId.value) {
+const addSingleToPlaylist = async (item: MediaRow) => {
+    if (!activePlaylistId.value || !item.media) {
         notifyError($gettext('Selecciona una playlist primero.'));
         return;
     }
@@ -435,7 +425,7 @@ const addSingleToPlaylist = async (item: MediaFile) => {
         await axios.put(batchUrl.value, {
             'do': 'playlist',
             'playlists': [activePlaylistId.value],
-            'files': [item.unique_id]
+            'files': [item.media.unique_id]
         });
 
         notifySuccess($gettext('Canción añadida a la playlist correctamente.'));
@@ -447,48 +437,52 @@ const addSingleToPlaylist = async (item: MediaFile) => {
     }
 };
 
-const playSong = (item: MediaFile) => {
+const playSong = (item: MediaRow) => {
+    if (!item.media) return;
+    
     playerStore.toggle({
-        url: item.links.play,
-        title: `${item.title} - ${item.artist}`,
+        url: item.media.links.play,
+        title: `${item.media.title} - ${item.media.artist}`,
         isStream: false
     });
 };
 
-const openBatchModal = (item: MediaFile) => {
+const openBatchModal = (item: MediaRow) => {
+    if (!item.media) return;
+    
     $batchModal.value?.open({
-        id: item.id,
-        title: item.title,
-        artist: item.artist,
-        storage_location_id: 0 // This will be populated from the API response
+        id: item.media.id,
+        title: item.media.title,
+        artist: item.media.artist,
+        storage_location_id: item.media.storage_location_id
     });
 };
 
-const catalogoFields = computed<DataTableField<MediaFile>[]>(() => [
+const catalogoFields = computed<DataTableField<MediaRow>[]>(() => [
     {
-        key: 'art',
+        key: 'media.art',
         label: '',
         sortable: false,
         class: 'shrink'
     },
     {
-        key: 'title',
+        key: 'media.title',
         label: $gettext('Canción'),
         sortable: true
     },
     {
-        key: 'album',
+        key: 'media.album',
         label: $gettext('Álbum'),
         sortable: true
     },
     {
-        key: 'genre',
+        key: 'media.genre',
         label: $gettext('Género'),
         sortable: true,
         class: 'shrink'
     },
     {
-        key: 'play_count',
+        key: 'media.play_count',
         label: $gettext('Popularidad'),
         sortable: true,
         class: 'shrink text-center'
