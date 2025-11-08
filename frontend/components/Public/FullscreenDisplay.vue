@@ -1,7 +1,7 @@
 <template>
     <div class="fullscreen-display">
         <!-- QR Widget siempre visible -->
-        <qr-scanner-widget :request-url="requestUrl" />
+        <qr-scanner-widget v-if="requestUrl" :request-url="requestUrl" />
 
         <!-- Video Player (si hay video_url) -->
         <div

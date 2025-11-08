@@ -1,12 +1,26 @@
 <template>
     <!-- Fullscreen Display Mode (for TV/Projector screens) -->
     <fullscreen-display
-        v-if="isFullscreenMode"
+        v-if="isFullscreenMode && currentNp"
         :current-song="currentSong"
         :station-short-name="stationShortName"
         :display-mode="displayMode"
         :now-playing-props="nowPlayingProps"
     />
+
+    <!-- Loading state for fullscreen -->
+    <div
+        v-else-if="isFullscreenMode && !currentNp"
+        class="fullscreen-display"
+        style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #1a1a2e;"
+    >
+        <div class="text-center">
+            <div class="spinner-border text-light mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-light">Cargando...</p>
+        </div>
+    </div>
 
     <!-- Normal Player Mode -->
     <div
