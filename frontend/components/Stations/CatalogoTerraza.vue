@@ -251,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue';
+import {ref, computed, onMounted, useTemplateRef} from 'vue';
 import {useAxios} from '~/vendor/axios';
 import {useTranslate} from '~/vendor/gettext';
 import {getStationApiUrl} from '~/router.ts';
@@ -312,8 +312,8 @@ const activePlaylistId = ref<number | string>('');
 const selectedItems = ref<MediaFile[]>([]);
 const adding = ref(false);
 
-const $dataTable = ref();
-const $batchModal = ref();
+const $dataTable = useTemplateRef('$dataTable');
+const $batchModal = useTemplateRef('$batchModal');
 
 // Cargar playlists disponibles
 const loadPlaylists = async () => {
@@ -454,7 +454,8 @@ const addToPlaylist = async () => {
         );
 
         selectedItems.value = [];
-        $dataTable.value?.clearSelected();
+        // Refrescar tabla para limpiar selección
+        $dataTable.value?.refresh();
     } catch (error) {
         console.error('Error al añadir a playlist:', error);
         notifyError($gettext('Error al añadir canciones a la playlist.'));
