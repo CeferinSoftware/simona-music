@@ -1,57 +1,73 @@
 <template>
     <div class="fullscreen-display">
-        <!-- QR Widget siempre visible -->
-        <qr-scanner-widget v-if="requestUrl" :request-url="requestUrl" />
-
-        <!-- Video Player (si hay video_url) -->
-        <div
-            v-if="currentVideoUrl && displayMode === 'videoclips'"
-            class="video-container"
-        >
-            <iframe
-                :key="currentVideoUrl"
-                :src="embedUrl"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-                class="video-player"
-            />
+        <!-- Loading State -->
+        <div v-if="isLoading" class="loading-container">
+            <div class="pulse-circles">
+                <div
+                    v-for="i in 3"
+                    :key="i"
+                    class="pulse-circle"
+                    :style="{ animationDelay: `${i * 0.3}s` }"
+                />
+            </div>
+            <p class="loading-text">Cargando...</p>
         </div>
 
-        <!-- Audio Visualization Fallback -->
-        <div
-            v-else
-            class="visualization-container"
-        >
-            <div class="waveform-placeholder">
-                <div class="pulse-circles">
-                    <div
-                        v-for="i in 3"
-                        :key="i"
-                        class="pulse-circle"
-                        :style="{ animationDelay: `${i * 0.3}s` }"
-                    />
+        <!-- Content (when loaded) -->
+        <template v-else>
+            <!-- QR Widget siempre visible -->
+            <qr-scanner-widget v-if="requestUrl" :request-url="requestUrl" />
+
+            <!-- Video Player (si hay video_url) -->
+            <div
+                v-if="currentVideoUrl && displayMode === 'videoclips'"
+                class="video-container"
+            >
+                <iframe
+                    :key="currentVideoUrl"
+                    :src="embedUrl"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    class="video-player"
+                />
+            </div>
+
+            <!-- Audio Visualization Fallback -->
+            <div
+                v-else
+                class="visualization-container"
+            >
+                <div class="waveform-placeholder">
+                    <div class="pulse-circles">
+                        <div
+                            v-for="i in 3"
+                            :key="i"
+                            class="pulse-circle"
+                            :style="{ animationDelay: `${i * 0.3}s` }"
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Song Info Overlay (sutil) -->
-        <div class="song-info-overlay">
-            <transition name="fade">
-                <div
-                    v-if="currentSong"
-                    :key="currentSong.id"
-                    class="song-info"
-                >
-                    <h1 class="song-title">
-                        {{ currentSong.title }}
-                    </h1>
-                    <h2 class="song-artist">
-                        {{ currentSong.artist }}
-                    </h2>
-                </div>
-            </transition>
-        </div>
+            <!-- Song Info Overlay (sutil) -->
+            <div class="song-info-overlay">
+                <transition name="fade">
+                    <div
+                        v-if="currentSong"
+                        :key="currentSong.id"
+                        class="song-info"
+                    >
+                        <h1 class="song-title">
+                            {{ currentSong.title }}
+                        </h1>
+                        <h2 class="song-artist">
+                            {{ currentSong.artist }}
+                        </h2>
+                    </div>
+                </transition>
+            </div>
+        </template>
 
         <!-- Hidden audio player for streaming -->
         <div style="display: none;">
@@ -81,6 +97,7 @@ interface FullscreenDisplayProps {
     stationShortName: string;
     displayMode: 'videoclips' | 'waveform';
     nowPlayingProps: any;
+    isLoading?: boolean;
 }
 
 const props = defineProps<FullscreenDisplayProps>();
@@ -263,6 +280,22 @@ function onNowPlayingUpdate(np: ApiNowPlaying) {
 
 .fade-enter-from, .fade-leave-to {
     opacity: 0;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 24px;
+}
+
+.loading-text {
+    color: white;
+    font-size: 1.5rem;
+    margin: 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 @media (max-width: 768px) {

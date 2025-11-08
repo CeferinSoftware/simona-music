@@ -1,11 +1,12 @@
 <template>
     <!-- Fullscreen Display Mode (for TV/Projector screens) -->
     <fullscreen-display
-        v-if="isFullscreenMode && currentNp"
+        v-if="isFullscreenMode"
         :current-song="currentSong"
         :station-short-name="stationShortName"
         :display-mode="displayMode"
         :now-playing-props="nowPlayingProps"
+        :is-loading="!currentNp"
     />
 
     <!-- Loading state for fullscreen -->
