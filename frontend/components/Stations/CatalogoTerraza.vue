@@ -251,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, useTemplateRef} from 'vue';
+import {ref, computed, onMounted} from 'vue';
 import {useAxios} from '~/vendor/axios';
 import {useTranslate} from '~/vendor/gettext';
 import {getStationApiUrl} from '~/router.ts';
@@ -269,6 +269,7 @@ import {
 import {useNotify} from '~/components/Common/Toasts/useNotify.ts';
 import {usePlayerStore} from '~/functions/usePlayerStore.ts';
 import {useDebounceFn} from '@vueuse/core';
+import type {ComponentPublicInstance} from 'vue';
 
 interface MediaFile {
     unique_id: string;
@@ -312,8 +313,8 @@ const activePlaylistId = ref<number | string>('');
 const selectedItems = ref<MediaFile[]>([]);
 const adding = ref(false);
 
-const $dataTable = useTemplateRef('$dataTable');
-const $batchModal = useTemplateRef('$batchModal');
+const $dataTable = ref<ComponentPublicInstance<typeof DataTable> | null>(null);
+const $batchModal = ref<ComponentPublicInstance<typeof BatchPlaylistModal> | null>(null);
 
 // Cargar playlists disponibles
 const loadPlaylists = async () => {
