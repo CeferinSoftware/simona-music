@@ -188,9 +188,16 @@ const radioPlayerProps = computed(() => {
 });
 
 const onNowPlayingUpdate = (newNowPlaying: ApiNowPlaying) => {
-    console.log('FullPlayer: NowPlaying updated =', newNowPlaying);
+    console.error('📡 FullPlayer: NowPlaying updated =', newNowPlaying);
     history.value = newNowPlaying?.song_history;
     currentNp.value = newNowPlaying;
+    
+    // Forzar evaluación del computed en fullscreen mode
+    if (isFullscreenMode.value) {
+        console.error('📺 FullPlayer: Fullscreen mode active, evaluating currentSong...');
+        const song = currentSong.value;
+        console.error('📺 FullPlayer: currentSong evaluated =', song);
+    }
 }
 
 // Get audio element reference for visualization
