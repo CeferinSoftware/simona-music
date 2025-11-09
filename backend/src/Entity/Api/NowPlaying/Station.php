@@ -102,6 +102,12 @@ final class Station
     )]
     public bool $requests_enabled = false;
 
+    #[OA\Property(
+        description: 'Public player display mode for screens/TVs',
+        example: 'videoclips'
+    )]
+    public string $display_mode = 'waveform';
+
     /** @var StationMount[] */
     #[OA\Property]
     public array $mounts = [];

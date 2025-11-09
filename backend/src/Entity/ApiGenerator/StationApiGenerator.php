@@ -38,6 +38,7 @@ final readonly class StationApiGenerator
         $response->url = $station->url;
         $response->is_public = $station->enable_public_page;
         $response->requests_enabled = $station->enable_requests;
+        $response->display_mode = $station->display_mode;
 
         $response->public_player_url = new ResolvableUrl(
             $this->router->namedAsUri(
