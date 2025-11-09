@@ -16,7 +16,7 @@
         <!-- Content (when loaded) -->
         <template v-else>
             <!-- QR Widget siempre visible -->
-            <qr-scanner-widget v-if="requestUrl" :request-url="requestUrl" />
+            <qr-scanner-widget :request-url="requestUrl" />
 
             <!-- Video Player (si hay video_url) -->
             <div
@@ -110,8 +110,11 @@ const localNp = ref<ApiNowPlaying | null>(null);
 
 // Request URL for QR code
 const requestUrl = computed(() => {
+    console.error('🎯 FullscreenDisplay: stationShortName =', props.stationShortName);
     const baseUrl = window.location.origin;
-    return `${baseUrl}/public/${props.stationShortName}`;
+    const url = `${baseUrl}/public/${props.stationShortName}`;
+    console.error('🎯 FullscreenDisplay: requestUrl =', url);
+    return url;
 });
 
 // Current video URL - Solo considerar válido si hay song Y displayMode está en videoclips
