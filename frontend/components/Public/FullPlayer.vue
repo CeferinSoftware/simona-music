@@ -7,6 +7,7 @@
         :display-mode="displayMode"
         :radio-player-props="radioPlayerProps"
         :is-loading="!currentSong"
+        @np_updated="onNowPlayingUpdate"
     />
 
     <!-- Loading state for fullscreen -->
@@ -126,7 +127,9 @@ const audioElement = ref<HTMLAudioElement | null>(null);
 // Detect if we should show fullscreen mode
 const isFullscreenMode = computed(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.has('display') || urlParams.has('fullscreen');
+    const result = urlParams.has('display') || urlParams.has('fullscreen');
+    console.error('🖥️ isFullscreenMode =', result);
+    return result;
 });
 
 const stationShortName = computed(() => {

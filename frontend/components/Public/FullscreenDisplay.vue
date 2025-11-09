@@ -102,6 +102,10 @@ interface FullscreenDisplayProps {
 
 const props = defineProps<FullscreenDisplayProps>();
 
+const emit = defineEmits<{
+    np_updated: [np: ApiNowPlaying]
+}>();
+
 const localNp = ref<ApiNowPlaying | null>(null);
 
 // Request URL for QR code
@@ -208,6 +212,9 @@ function extractVimeoId(url: string): string {
 function onNowPlayingUpdate(np: ApiNowPlaying) {
     localNp.value = np;
     console.log('Now Playing Updated:', np);
+    
+    // Propagar evento hacia FullPlayer
+    emit('np_updated', np);
 }
 </script>
 
