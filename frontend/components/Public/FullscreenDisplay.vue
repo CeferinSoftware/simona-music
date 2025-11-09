@@ -110,45 +110,99 @@ const requestUrl = computed(() => {
     return `${baseUrl}/public/${props.stationShortName}`;
 });
 
-// Current video URL
+// Current video URL - Solo considerar válido si hay song Y displayMode está en videoclips
 const currentVideoUrl = computed(() => {
-    console.log('FullscreenDisplay: currentSong =', props.currentSong);
-    console.log('FullscreenDisplay: video_url =', props.currentSong?.video_url);
-    console.log('FullscreenDisplay: displayMode =', props.displayMode);
-    return props.currentSong?.video_url || null;
+    // Verificar que tenemos una canción válida
+    if (!props.currentSong) {
+        console.log('FullscreenDisplay: No currentSong available');
+        return null;
+    }
+
+    // Verificar que displayMode está configurado para mostrar videos
+    if (props.displayMode !== 'videoclips') {
+        console.log('FullscreenDisplay: displayMode is not videoclips, it is:', props.displayMode);
+        return null;
+    }
+
+    // Verificar que hay video_url disponible
+    const videoUrl = props.currentSong.video_url;
+    if (!videoUrl || videoUrl.trim() === '') {
+        console.log('FullscreenDisplay: No video_url for current song');
+        return null;
+    }
+
+    console.log('FullscreenDisplay: Valid video URL found:', videoUrl);
+    return videoUrl.trim();
 });
 
 // Convert YouTube/Vimeo URL to embed format
 const embedUrl = computed(() => {
-    if (!currentVideoUrl.value) return '';
+    if (!currentVideoUrl.value) {
+        console.log('FullscreenDisplay: No currentVideoUrl, returning empty string');
+        return '';
+    }
 
     const url = currentVideoUrl.value;
+    console.log('FullscreenDisplay: Converting URL to embed format:', url);
 
-    // YouTube
+    // YouTube - soporta varios formatos de URL
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
         const videoId = extractYouTubeId(url);
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1`;
+        if (!videoId) {
+            console.error('FullscreenDisplay: Could not extract YouTube video ID from:', url);
+            return '';
+        }
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}`;
+        console.log('FullscreenDisplay: YouTube embed URL:', embedUrl);
+        return embedUrl;
     }
 
     // Vimeo
     if (url.includes('vimeo.com')) {
         const videoId = extractVimeoId(url);
-        return `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0&loop=1`;
+        if (!videoId) {
+            console.error('FullscreenDisplay: Could not extract Vimeo video ID from:', url);
+            return '';
+        }
+        const embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=1&title=0&byline=0&portrait=0&loop=1`;
+        console.log('FullscreenDisplay: Vimeo embed URL:', embedUrl);
+        return embedUrl;
     }
 
+    // Si no es YouTube ni Vimeo, devolver la URL original
+    console.log('FullscreenDisplay: URL is not YouTube or Vimeo, using as-is');
     return url;
 });
 
 function extractYouTubeId(url: string): string {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : '';
+    // Mejorada para soportar más formatos de URLs de YouTube
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match && match[1]) {
+            console.log('FullscreenDisplay: Extracted YouTube ID:', match[1]);
+            return match[1];
+        }
+    }
+    
+    console.error('FullscreenDisplay: Failed to extract YouTube ID from:', url);
+    return '';
 }
 
 function extractVimeoId(url: string): string {
-    const regExp = /vimeo.*\/(\d+)/i;
+    const regExp = /vimeo\.com\/(?:video\/)?(\d+)/i;
     const match = url.match(regExp);
-    return match ? match[1] : '';
+    if (match && match[1]) {
+        console.log('FullscreenDisplay: Extracted Vimeo ID:', match[1]);
+        return match[1];
+    }
+    
+    console.error('FullscreenDisplay: Failed to extract Vimeo ID from:', url);
+    return '';
 }
 
 function onNowPlayingUpdate(np: ApiNowPlaying) {

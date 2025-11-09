@@ -138,20 +138,35 @@ const displayMode = computed<'videoclips' | 'waveform'>(() => {
 });
 
 const currentSong = computed(() => {
-    if (!currentNp.value?.now_playing?.song) {
-        console.log('FullPlayer: No song in currentNp');
+    // Validación completa: asegurar que tenemos datos reales de now_playing
+    if (!currentNp.value?.now_playing) {
+        console.log('FullPlayer: No now_playing data');
+        return null;
+    }
+
+    const nowPlaying = currentNp.value.now_playing;
+    
+    // Verificar que sh_id > 0 indica que hay una canción real reproduciéndose
+    if (!nowPlaying.sh_id || nowPlaying.sh_id === 0) {
+        console.log('FullPlayer: now_playing exists but sh_id is 0 (no active song)');
+        return null;
+    }
+
+    // Verificar que el objeto song existe y tiene datos
+    if (!nowPlaying.song || !nowPlaying.song.title) {
+        console.log('FullPlayer: No song data or title');
         return null;
     }
     
     const song = {
-        id: currentNp.value.now_playing.song.id || '',
-        title: currentNp.value.now_playing.song.title || '',
-        artist: currentNp.value.now_playing.song.artist || '',
-        video_url: (currentNp.value.now_playing.song as any).video_url || null
+        id: nowPlaying.song.id || nowPlaying.sh_id?.toString() || '',
+        title: nowPlaying.song.title || '',
+        artist: nowPlaying.song.artist || '',
+        video_url: (nowPlaying.song as any).video_url || null
     };
     
     console.log('FullPlayer: currentSong =', song);
-    console.log('FullPlayer: Raw song data =', currentNp.value.now_playing.song);
+    console.log('FullPlayer: video_url =', song.video_url);
     
     return song;
 });
