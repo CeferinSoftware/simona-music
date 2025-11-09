@@ -1,11 +1,15 @@
 <template>
     <div class="qr-scanner-widget">
         <div class="qr-content">
+            <div class="qr-header">
+                <span class="qr-icon">📱</span>
+                <h3 class="qr-title">{{ $gettext('Escanea el QR') }}</h3>
+            </div>
             <div class="qr-code">
                 <img :src="qrCodeUrl" alt="QR Code" />
             </div>
             <div class="qr-text">
-                <p>{{ $gettext('Escanea y pide tu canción') }}</p>
+                <p class="qr-description">{{ $gettext('y pide tu canción') }}</p>
             </div>
         </div>
     </div>
@@ -34,13 +38,15 @@ const qrCodeUrl = computed(() => {
     top: 20px;
     right: 20px;
     z-index: 9999;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 1px rgba(255, 255, 255, 0.1) inset;
+    border: 2px solid rgba(59, 130, 246, 0.3);
     animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeInScale {
@@ -55,43 +61,76 @@ const qrCodeUrl = computed(() => {
 }
 
 .qr-scanner-widget:hover {
-    transform: scale(1.05);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 25px 70px rgba(59, 130, 246, 0.3),
+                0 20px 60px rgba(0, 0, 0, 0.6);
+    border-color: rgba(59, 130, 246, 0.5);
 }
 
 .qr-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
+}
+
+.qr-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.qr-icon {
+    font-size: 28px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.qr-title {
+    margin: 0;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 .qr-code {
     background: white;
-    padding: 8px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
+                0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .qr-code img {
     display: block;
-    width: 150px;
-    height: 150px;
-    border-radius: 8px;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
 }
 
 .qr-text {
     text-align: center;
 }
 
-.qr-text p {
+.qr-description {
     margin: 0;
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    font-weight: 500;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    letter-spacing: 0.3px;
 }
 
 /* Responsive adjustments */
@@ -99,16 +138,24 @@ const qrCodeUrl = computed(() => {
     .qr-scanner-widget {
         top: 10px;
         right: 10px;
-        padding: 12px;
+        padding: 16px;
+    }
+    
+    .qr-icon {
+        font-size: 24px;
+    }
+    
+    .qr-title {
+        font-size: 14px;
     }
     
     .qr-code img {
-        width: 120px;
-        height: 120px;
+        width: 130px;
+        height: 130px;
     }
     
-    .qr-text p {
-        font-size: 12px;
+    .qr-description {
+        font-size: 13px;
     }
 }
 
