@@ -6,7 +6,7 @@
         :station-short-name="stationShortName"
         :display-mode="displayMode"
         :radio-player-props="radioPlayerProps"
-        :is-loading="!currentNp"
+        :is-loading="!currentSong"
     />
 
     <!-- Loading state for fullscreen -->
