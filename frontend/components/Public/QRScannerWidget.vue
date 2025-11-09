@@ -24,11 +24,14 @@ interface QRWidgetProps {
 
 const props = defineProps<QRWidgetProps>();
 
+console.error('🔍 QR Widget - requestUrl:', props.requestUrl);
+
 // Generate QR code using a QR code API service
 const qrCodeUrl = computed(() => {
     const encodedUrl = encodeURIComponent(props.requestUrl);
-    // Using qrserver.com API (free, no API key needed)
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;
+    const url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;
+    console.error('🔍 QR Widget - qrCodeUrl:', url);
+    return url;
 });
 </script>
 
@@ -37,7 +40,7 @@ const qrCodeUrl = computed(() => {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 9999;
+    z-index: 99999;
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
     backdrop-filter: blur(16px);
     border-radius: 20px;
