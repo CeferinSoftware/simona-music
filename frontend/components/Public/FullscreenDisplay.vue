@@ -1,4 +1,7 @@
 <template>
+    <!-- QR Widget FUERA del contenedor fullscreen para evitar overflow:hidden -->
+    <qr-scanner-widget :request-url="requestUrl" />
+    
     <div class="fullscreen-display">
         <!-- Loading State -->
         <div v-if="isLoading" class="loading-container">
@@ -15,8 +18,6 @@
 
         <!-- Content (when loaded) -->
         <template v-else>
-            <!-- QR Widget siempre visible -->
-            <qr-scanner-widget :request-url="requestUrl" />
 
             <!-- Video Player (si hay video_url) -->
             <div
