@@ -86,6 +86,15 @@
                                 </data-table>
                             </div>
                         </tab>
+                        <tab :label="$gettext('Mesa Virtual')">
+                            <loading :loading="propsLoading" lazy>
+                                <dj-console
+                                    v-if="props"
+                                    :station-name="props.connectionServerUrl"
+                                    :base-uri="djBaseUri"
+                                />
+                            </loading>
+                        </tab>
                         <schedule-view-tab
                             ref="$scheduleTab"
                             :schedule-url="scheduleUrl"
@@ -117,9 +126,10 @@ import DataTable, {DataTableField} from "~/components/Common/DataTable.vue";
 import EditModal from "~/components/Stations/Streamers/EditModal.vue";
 import BroadcastsModal from "~/components/Stations/Streamers/BroadcastsModal.vue";
 import ConnectionInfo from "~/components/Stations/Streamers/ConnectionInfo.vue";
+import DJConsole from "~/components/Stations/Streamers/DJConsole.vue";
 import AlbumArt from "~/components/Common/AlbumArt.vue";
 import {useTranslate} from "~/vendor/gettext";
-import {useTemplateRef} from "vue";
+import {useTemplateRef, computed} from "vue";
 import useHasEditModal from "~/functions/useHasEditModal";
 import useConfirmAndDelete from "~/functions/useConfirmAndDelete";
 import CardPage from "~/components/Common/CardPage.vue";
@@ -201,4 +211,9 @@ const {doDelete} = useConfirmAndDelete(
     $gettext('Delete Streamer?'),
     () => relist()
 );
+
+const djBaseUri = computed(() => {
+    if (!props.value) return '';
+    return `wss://${props.value.connectionServerUrl}:${props.value.connectionStreamPort}/${props.value.connectionDjMountPoint}`;
+});
 </script>

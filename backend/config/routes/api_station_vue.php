@@ -32,6 +32,10 @@ return static function (RouteCollectorProxy $app) {
             ->setName('api:vue:stations:profile:edit')
             ->add(new Middleware\Permissions(StationPermissions::Profile, true));
 
+        $group->get('/screens', Controller\Api\Stations\Vue\ScreensAction::class)
+            ->setName('api:vue:stations:screens:index')
+            ->add(new Middleware\Permissions(StationPermissions::Profile, true));
+
         $group->get('/sftp_users', Controller\Api\Stations\Vue\SftpUsersAction::class)
             ->setName('api:vue:stations:sftp_users:index')
             ->add(new Middleware\StationSupportsFeature(StationFeatures::Sftp))

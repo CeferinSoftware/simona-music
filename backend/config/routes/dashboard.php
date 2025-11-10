@@ -49,6 +49,7 @@ return static function (RouteCollectorProxy $app) {
                         'stations:reports:soundexchange' => '/reports/soundexchange',
                         'stations:reports:requests' => '/reports/requests',
                         'stations:restart:index' => '/restart',
+                        'stations:screens:index' => '/screens',
                         'stations:sftp_users:index' => '/sftp_users',
                         'stations:streamers:index' => '/streamers',
                         'stations:webhooks:index' => '/webhooks',
