@@ -35,12 +35,13 @@ const qrCodeUrl = computed(() => {
 });
 </script>
 
-<style scoped>
+<style>
 .qr-scanner-widget {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 99999;
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
     backdrop-filter: blur(16px);
     border-radius: 20px;

@@ -229,6 +229,8 @@ function onNowPlayingUpdate(np: ApiNowPlaying) {
     position: relative;
     width: 100vw;
     height: 100vh;
+    overflow: visible;
+    pointer-events: none;
 }
 
 .fullscreen-display {
@@ -239,6 +241,7 @@ function onNowPlayingUpdate(np: ApiNowPlaying) {
     height: 100vh;
     background: #000;
     overflow: hidden;
+    pointer-events: auto;
 }
 
 .video-container {
