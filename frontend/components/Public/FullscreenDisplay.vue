@@ -115,7 +115,7 @@ const localNp = ref<ApiNowPlaying | null>(null);
 const requestUrl = computed(() => {
     console.error('🎯 FullscreenDisplay: stationShortName =', props.stationShortName);
     const baseUrl = window.location.origin;
-    const url = `${baseUrl}/public/${props.stationShortName}`;
+    const url = `${baseUrl}/public/${props.stationShortName}?request`;
     console.error('🎯 FullscreenDisplay: requestUrl =', url);
     return url;
 });

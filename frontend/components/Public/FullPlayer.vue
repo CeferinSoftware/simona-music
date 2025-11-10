@@ -1,7 +1,16 @@
 <template>
+    <!-- Requests-Only Mode (for mobile QR scanning) -->
+    <div
+        v-if="isRequestsOnlyMode && enableRequests"
+        class="container-fluid py-4"
+    >
+        <h2 class="mb-4">{{ stationName }} - Solicitar Canción</h2>
+        <requests-data-table v-bind="props" />
+    </div>
+
     <!-- Fullscreen Display Mode (for TV/Projector screens) -->
     <fullscreen-display
-        v-if="isFullscreenMode"
+        v-else-if="isFullscreenMode"
         :current-song="currentSong"
         :station-short-name="stationShortName"
         :display-mode="displayMode"
@@ -97,6 +106,7 @@
 <script setup lang="ts">
 import SongHistoryModal from "~/components/Public/FullPlayer/SongHistoryModal.vue";
 import RequestModal from "~/components/Public/FullPlayer/RequestModal.vue";
+import RequestsDataTable from "~/components/Public/Requests/RequestsDataTable.vue";
 import Icon from "~/components/Common/Icons/Icon.vue";
 import RadioPlayer, {PlayerProps} from "~/components/Public/Player.vue";
 import FullscreenDisplay from "~/components/Public/FullscreenDisplay.vue";
@@ -130,6 +140,12 @@ const isFullscreenMode = computed(() => {
     const result = urlParams.has('display') || urlParams.has('fullscreen');
     console.error('🖥️ isFullscreenMode =', result);
     return result;
+});
+
+// Detect if we should show only requests page
+const isRequestsOnlyMode = computed(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.has('request');
 });
 
 const stationShortName = computed(() => {
