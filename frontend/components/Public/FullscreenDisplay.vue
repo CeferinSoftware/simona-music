@@ -1,8 +1,9 @@
 <template>
-    <!-- QR Widget FUERA del contenedor fullscreen para evitar overflow:hidden -->
-    <qr-scanner-widget :request-url="requestUrl" />
-    
-    <div class="fullscreen-display">
+    <div class="fullscreen-wrapper">
+        <!-- QR Widget en posición fija -->
+        <qr-scanner-widget :request-url="requestUrl" />
+        
+        <div class="fullscreen-display">
         <!-- Loading State -->
         <div v-if="isLoading" class="loading-container">
             <div class="pulse-circles">
@@ -76,6 +77,7 @@
                 v-bind="radioPlayerProps"
                 @np_updated="onNowPlayingUpdate"
             />
+        </div>
         </div>
     </div>
 </template>
@@ -223,6 +225,12 @@ function onNowPlayingUpdate(np: ApiNowPlaying) {
 </script>
 
 <style scoped>
+.fullscreen-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
 .fullscreen-display {
     position: fixed;
     top: 0;
