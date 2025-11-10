@@ -1,7 +1,7 @@
 <template>
     <div class="fullscreen-wrapper">
         <!-- QR Widget en posición fija -->
-        <qr-scanner-widget :request-url="requestUrl" />
+        <QRScannerWidget :request-url="requestUrl" />
         
         <div class="fullscreen-display">
         <!-- Loading State -->
