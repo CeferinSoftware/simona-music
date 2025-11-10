@@ -26,14 +26,9 @@ const props = defineProps<QRWidgetProps>();
 
 console.error('🔍 QR Widget - requestUrl:', props.requestUrl);
 
-// Añadir parámetro para abrir modal automáticamente
-const requestUrlWithModal = computed(() => {
-    return `${props.requestUrl}/request`;
-});
-
 // Generate QR code using a QR code API service
 const qrCodeUrl = computed(() => {
-    const encodedUrl = encodeURIComponent(requestUrlWithModal.value);
+    const encodedUrl = encodeURIComponent(props.requestUrl);
     const url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;
     console.error('🔍 QR Widget - qrCodeUrl:', url);
     return url;
