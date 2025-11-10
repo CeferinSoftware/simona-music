@@ -1,14 +1,14 @@
 <template>
     <div class="qr-scanner-widget">
         <div class="qr-content">
-            <div class="qr-header">
-                <span class="qr-icon">📱</span>
-                <h3 class="qr-title">{{ $gettext('Escanea el QR') }}</h3>
-            </div>
             <div class="qr-code">
                 <img :src="qrCodeUrl" alt="QR Code" />
             </div>
-            <div class="qr-text">
+            <div class="qr-text-container">
+                <div class="qr-header">
+                    <span class="qr-icon">📱</span>
+                    <h3 class="qr-title">{{ $gettext('Escanea el QR') }}</h3>
+                </div>
                 <p class="qr-description">{{ $gettext('y pide tu canción') }}</p>
             </div>
         </div>
@@ -26,9 +26,14 @@ const props = defineProps<QRWidgetProps>();
 
 console.error('🔍 QR Widget - requestUrl:', props.requestUrl);
 
+// Añadir parámetro para abrir modal automáticamente
+const requestUrlWithModal = computed(() => {
+    return `${props.requestUrl}/request`;
+});
+
 // Generate QR code using a QR code API service
 const qrCodeUrl = computed(() => {
-    const encodedUrl = encodeURIComponent(props.requestUrl);
+    const encodedUrl = encodeURIComponent(requestUrlWithModal.value);
     const url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;
     console.error('🔍 QR Widget - qrCodeUrl:', url);
     return url;
@@ -44,8 +49,8 @@ const qrCodeUrl = computed(() => {
     pointer-events: auto !important;
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
     backdrop-filter: blur(16px);
-    border-radius: 20px;
-    padding: 20px;
+    border-radius: 16px;
+    padding: 14px 18px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
                 0 0 1px rgba(255, 255, 255, 0.1) inset;
     border: 2px solid rgba(59, 130, 246, 0.3);
@@ -73,20 +78,26 @@ const qrCodeUrl = computed(() => {
 
 .qr-content {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
+}
+
+.qr-text-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .qr-header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .qr-icon {
-    font-size: 28px;
+    font-size: 24px;
     animation: bounce 2s ease-in-out infinite;
 }
 
@@ -102,36 +113,34 @@ const qrCodeUrl = computed(() => {
 .qr-title {
     margin: 0;
     color: white;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .qr-code {
     background: white;
-    padding: 10px;
-    border-radius: 16px;
+    padding: 8px;
+    border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
                 0 0 0 3px rgba(59, 130, 246, 0.2);
+    flex-shrink: 0;
 }
 
 .qr-code img {
     display: block;
-    width: 160px;
-    height: 160px;
-    border-radius: 12px;
-}
-
-.qr-text {
-    text-align: center;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
 }
 
 .qr-description {
     margin: 0;
     color: rgba(255, 255, 255, 0.9);
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 500;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     letter-spacing: 0.3px;
