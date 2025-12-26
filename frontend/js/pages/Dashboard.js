@@ -18,6 +18,11 @@ initApp(DashboardWrapper, async (vueApp) => {
                 component: () => import('~/components/Account.vue'),
                 name: 'profile:index'
             },
+            {
+                path: '/dj/terrazas',
+                component: () => import('~/components/DJTerrazasPanel.vue'),
+                name: 'dj:terrazas'
+            },
             ...useAdminRoutes(),
             ...useStationsRoutes()
         ],

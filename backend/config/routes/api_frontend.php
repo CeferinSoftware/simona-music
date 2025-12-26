@@ -93,6 +93,15 @@ return static function (RouteCollectorProxy $group) {
                 '/batch/add-media-to-playlists',
                 Controller\Api\Admin\BatchActions\AddMediaToPlaylistsAction::class
             )->setName('api:frontend:batch:add-media-to-playlists');
+
+            // DJ Panel - Centralized terrazas management
+            $group->group(
+                '/dj',
+                function (RouteCollectorProxy $group) {
+                    $group->get('/terrazas', Controller\Api\Frontend\DjTerrazasAction::class)
+                        ->setName('api:frontend:dj:terrazas');
+                }
+            );
         }
     )->add(Middleware\RequireLogin::class);
 };

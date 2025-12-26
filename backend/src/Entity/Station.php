@@ -264,6 +264,52 @@ final class Station implements Stringable, IdentifiableEntityInterface
     }
 
     #[
+        OA\Property(
+            description: "Categoría musical de la estación para segmentación de anuncios",
+            example: "rock"
+        ),
+        ORM\Column(type: 'string', length: 50, nullable: true, enumType: \App\Entity\Enums\AdCategories::class),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public ?\App\Entity\Enums\AdCategories $ad_category = null;
+
+    #[
+        OA\Property(
+            description: "Provincia donde está ubicada la estación/terraza",
+            example: "Madrid"
+        ),
+        ORM\Column(length: 100, nullable: true),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public ?string $province = null {
+        set => $this->truncateNullableString($value, 100);
+    }
+
+    #[
+        OA\Property(
+            description: "Ciudad donde está ubicada la estación/terraza",
+            example: "Alcobendas"
+        ),
+        ORM\Column(length: 100, nullable: true),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public ?string $city = null {
+        set => $this->truncateNullableString($value, 100);
+    }
+
+    #[
+        OA\Property(
+            description: "Sector/Barrio donde está ubicada la estación/terraza",
+            example: "Centro"
+        ),
+        ORM\Column(length: 100, nullable: true),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public ?string $sector = null {
+        set => $this->truncateNullableString($value, 100);
+    }
+
+    #[
         OA\Property(example: "/var/azuracast/stations/azuratest_radio"),
         ORM\Column(length: 255, nullable: false),
         Serializer\Groups([EntityGroupsInterface::GROUP_ADMIN, EntityGroupsInterface::GROUP_ALL])

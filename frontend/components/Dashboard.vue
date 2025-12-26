@@ -19,6 +19,14 @@
                         <span>{{ $gettext('My Account') }}</span>
                     </router-link>
                     <router-link
+                        class="btn btn-primary"
+                        role="button"
+                        :to="{ name: 'dj:terrazas' }"
+                    >
+                        <icon :icon="IconMic"/>
+                        <span>{{ $gettext('Panel DJ') }}</span>
+                    </router-link>
+                    <router-link
                         v-if="showAdmin"
                         class="btn btn-dark"
                         role="button"
@@ -266,6 +274,7 @@ import {
     IconAccountCircle,
     IconHeadphones,
     IconInfo,
+    IconMic,
     IconSettings,
     IconWarning
 } from "~/components/Common/Icons/icons.ts";

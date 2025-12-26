@@ -95,6 +95,40 @@ final class FlowUploadAction implements SingleActionInterface
                 $destPath,
                 $tempPath
             );
+            
+            // Aplicar metadatos enviados en el formulario pre-subida
+            if ($stationMedia instanceof StationMedia) {
+                $hasMetadataChanges = false;
+                
+                $title = Types::stringOrNull($request->getParam('title'));
+                if (!empty($title)) {
+                    $stationMedia->title = $title;
+                    $hasMetadataChanges = true;
+                }
+                
+                $artist = Types::stringOrNull($request->getParam('artist'));
+                if (!empty($artist)) {
+                    $stationMedia->artist = $artist;
+                    $hasMetadataChanges = true;
+                }
+                
+                $genre = Types::stringOrNull($request->getParam('genre'));
+                if (!empty($genre)) {
+                    $stationMedia->genre = $genre;
+                    $hasMetadataChanges = true;
+                }
+                
+                $album = Types::stringOrNull($request->getParam('album'));
+                if (!empty($album)) {
+                    $stationMedia->album = $album;
+                    $hasMetadataChanges = true;
+                }
+                
+                if ($hasMetadataChanges) {
+                    $stationMedia->updateMetaFields();
+                    $this->em->persist($stationMedia);
+                }
+            }
         } catch (CannotProcessMediaException $e) {
             $this->logger->error(
                 $e->getMessageWithPath(),

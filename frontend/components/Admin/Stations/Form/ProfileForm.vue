@@ -136,6 +136,53 @@
                 </form-group-checkbox>
             </div>
         </form-fieldset>
+
+        <form-fieldset>
+            <template #label>
+                {{ $gettext('Categoría y Ubicación') }}
+            </template>
+            <template #description>
+                {{ $gettext('Configuración para segmentación de anuncios publicitarios.') }}
+            </template>
+
+            <div class="row g-3">
+                <form-group-select
+                    id="edit_form_ad_category"
+                    class="col-md-6"
+                    :field="r$.ad_category"
+                    :options="adCategoryOptions"
+                    :label="$gettext('Categoría Musical')"
+                    :description="$gettext('Categoría principal de música para sincronizar con el sistema de anuncios.')"
+                    clearable
+                />
+
+                <form-group-select
+                    id="edit_form_province"
+                    class="col-md-6"
+                    :field="r$.province"
+                    :options="spanishProvinces"
+                    :label="$gettext('Provincia')"
+                    :description="$gettext('Provincia donde está ubicada la terraza.')"
+                    clearable
+                />
+
+                <form-group-field
+                    id="edit_form_city"
+                    class="col-md-6"
+                    :field="r$.city"
+                    :label="$gettext('Ciudad')"
+                    :description="$gettext('Ciudad donde está ubicada la terraza.')"
+                />
+
+                <form-group-field
+                    id="edit_form_sector"
+                    class="col-md-6"
+                    :field="r$.sector"
+                    :label="$gettext('Sector/Barrio')"
+                    :description="$gettext('Sector o barrio específico de la terraza.')"
+                />
+            </div>
+        </form-fieldset>
     </tab>
 </template>
 
@@ -174,4 +221,90 @@ const historyItemsOptions = computed(() => {
         {text: '15', value: 15}
     ];
 });
+
+const adCategoryOptions = computed(() => ({
+    'rock': 'Rock',
+    'pop': 'Pop',
+    'electronic': 'Electrónica',
+    'hiphop': 'Hip Hop',
+    'reggaeton': 'Reggaeton',
+    'bachata': 'Bachata',
+    'salsa': 'Salsa',
+    'jazz': 'Jazz',
+    'classical': 'Clásica',
+    'country': 'Country',
+    'rnb': 'R&B',
+    'latin': 'Latina',
+    'indie': 'Indie',
+    'metal': 'Metal',
+    'folk': 'Folk',
+    'blues': 'Blues',
+    'reggae': 'Reggae',
+    'soul': 'Soul',
+    'funk': 'Funk',
+    'disco': 'Disco',
+    'house': 'House',
+    'techno': 'Techno',
+    'trance': 'Trance',
+    'drum_and_bass': 'Drum & Bass',
+    'ambient': 'Ambient',
+    'lounge': 'Lounge',
+    'chillout': 'Chillout',
+    'world': 'World Music',
+    'flamenco': 'Flamenco',
+    'other': 'Otros',
+}));
+
+const spanishProvinces = computed(() => ({
+    'Álava': 'Álava',
+    'Albacete': 'Albacete',
+    'Alicante': 'Alicante',
+    'Almería': 'Almería',
+    'Asturias': 'Asturias',
+    'Ávila': 'Ávila',
+    'Badajoz': 'Badajoz',
+    'Barcelona': 'Barcelona',
+    'Burgos': 'Burgos',
+    'Cáceres': 'Cáceres',
+    'Cádiz': 'Cádiz',
+    'Cantabria': 'Cantabria',
+    'Castellón': 'Castellón',
+    'Ciudad Real': 'Ciudad Real',
+    'Córdoba': 'Córdoba',
+    'Cuenca': 'Cuenca',
+    'Gerona': 'Gerona',
+    'Granada': 'Granada',
+    'Guadalajara': 'Guadalajara',
+    'Guipúzcoa': 'Guipúzcoa',
+    'Huelva': 'Huelva',
+    'Huesca': 'Huesca',
+    'Islas Baleares': 'Islas Baleares',
+    'Jaén': 'Jaén',
+    'La Coruña': 'La Coruña',
+    'La Rioja': 'La Rioja',
+    'Las Palmas': 'Las Palmas',
+    'León': 'León',
+    'Lérida': 'Lérida',
+    'Lugo': 'Lugo',
+    'Madrid': 'Madrid',
+    'Málaga': 'Málaga',
+    'Murcia': 'Murcia',
+    'Navarra': 'Navarra',
+    'Orense': 'Orense',
+    'Palencia': 'Palencia',
+    'Pontevedra': 'Pontevedra',
+    'Salamanca': 'Salamanca',
+    'Santa Cruz de Tenerife': 'Santa Cruz de Tenerife',
+    'Segovia': 'Segovia',
+    'Sevilla': 'Sevilla',
+    'Soria': 'Soria',
+    'Tarragona': 'Tarragona',
+    'Teruel': 'Teruel',
+    'Toledo': 'Toledo',
+    'Valencia': 'Valencia',
+    'Valladolid': 'Valladolid',
+    'Vizcaya': 'Vizcaya',
+    'Zamora': 'Zamora',
+    'Zaragoza': 'Zaragoza',
+}));
 </script>

@@ -44,13 +44,27 @@
                 @change-directory="changeDirectory"
             />
 
-            <file-upload
-                :upload-url="uploadUrl"
-                :search-phrase="searchPhrase"
-                :valid-mime-types="validMimeTypes"
-                :current-directory="currentDirectory"
-                @relist="onTriggerRelist"
-            />
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <file-upload
+                        :upload-url="uploadUrl"
+                        :search-phrase="searchPhrase"
+                        :valid-mime-types="validMimeTypes"
+                        :current-directory="currentDirectory"
+                        @relist="onTriggerRelist"
+                    />
+                </div>
+                <div class="col-md-4">
+                    <div 
+                        class="youtube-upload-area h-100 d-flex flex-column justify-content-center align-items-center p-3 rounded"
+                        @click="openYouTubeModal"
+                    >
+                        <icon :icon="IconYouTube" class="mb-2 text-danger" style="font-size: 2rem;" />
+                        <div class="text-center">{{ $gettext('Añadir desde YouTube') }}</div>
+                        <small class="text-muted text-center">{{ $gettext('Importar vídeo musical') }}</small>
+                    </div>
+                </div>
+            </div>
 
             <media-toolbar
                 :batch-url="batchUrl"
@@ -64,6 +78,12 @@
                 @move-files="moveFiles"
             />
         </div>
+
+        <youtube-upload-modal
+            ref="$youtubeModal"
+            :add-from-youtube-url="addFromYoutubeUrl"
+            @relist="onTriggerRelist"
+        />
 
         <data-table
             id="station_media"
@@ -248,6 +268,7 @@ import NewDirectoryModal from "~/components/Stations/Media/NewDirectoryModal.vue
 import MoveFilesModal from "~/components/Stations/Media/MoveFilesModal.vue";
 import RenameModal from "~/components/Stations/Media/RenameModal.vue";
 import EditModal from "~/components/Stations/Media/EditModal.vue";
+import YouTubeUploadModal from "~/components/Stations/Media/YouTubeUploadModal.vue";
 import StationsCommonQuota from "~/components/Stations/Common/Quota.vue";
 import Icon from "~/components/Common/Icons/Icon.vue";
 import AlbumArt from "~/components/Common/AlbumArt.vue";
@@ -259,7 +280,7 @@ import formatFileSize from "~/functions/formatFileSize";
 import InfoCard from "~/components/Common/InfoCard.vue";
 import {getStationApiUrl} from "~/router";
 import {useRoute, useRouter} from "vue-router";
-import {IconFile, IconFolder, IconImage} from "~/components/Common/Icons/icons.ts";
+import {IconFile, IconFolder, IconImage, IconYouTube} from "~/components/Common/Icons/icons.ts";
 import useStationDateTimeFormatter from "~/functions/useStationDateTimeFormatter.ts";
 import {
     ApiStationMediaPlaylist,
@@ -292,10 +313,17 @@ const showSftp = computed(() => stationData.value.features.sftp ?? false);
 const listUrl = getStationApiUrl('/files/list');
 const batchUrl = getStationApiUrl('/files/batch');
 const uploadUrl = getStationApiUrl('/files/upload');
+const addFromYoutubeUrl = getStationApiUrl('/files/youtube');
 const listDirectoriesUrl = getStationApiUrl('/files/directories');
 const mkdirUrl = getStationApiUrl('/files/mkdir');
 const renameUrl = getStationApiUrl('/files/rename');
 const quotaUrl = getStationApiUrl(`/quota/${StorageLocationTypes.StationMedia}`);
+
+const $youtubeModal = useTemplateRef('$youtubeModal');
+
+const openYouTubeModal = () => {
+    $youtubeModal.value?.show();
+};
 
 const currentDirectory = ref('');
 

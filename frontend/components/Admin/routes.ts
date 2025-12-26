@@ -105,6 +105,11 @@ export default function useAdminRoutes(): RouteRecordRaw[] {
                     path: 'install_geolite',
                     component: () => import('~/components/Admin/GeoLite.vue'),
                     name: 'admin:install_geolite:index'
+                },
+                {
+                    path: 'advertisements',
+                    component: () => import('~/components/Admin/Advertisements.vue'),
+                    name: 'admin:advertisements:index'
                 }
             ],
         }

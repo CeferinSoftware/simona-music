@@ -175,6 +175,14 @@ export function useAdminMenu(): ReactiveMenu {
                             name: 'admin:install_geolite:index'
                         },
                         visible: userAllowed(GlobalPermissions.Settings)
+                    },
+                    {
+                        key: 'advertisements',
+                        label: computed(() => $gettext('Gestión de Anuncios')),
+                        url: {
+                            name: 'admin:advertisements:index'
+                        },
+                        visible: userAllowed(GlobalPermissions.Settings)
                     }
                 ]
             };
