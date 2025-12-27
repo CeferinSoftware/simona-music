@@ -1,21 +1,22 @@
 <template>
     <card-page :title="$gettext('Gestión de Anuncios Publicitarios')">
-        <template #header-actions>
+        <template #info>
+            <p class="card-text">
+                {{ $gettext('Administra los anuncios publicitarios que se insertarán en las estaciones según su categoría y ubicación geográfica.') }}
+            </p>
+        </template>
+        <template #actions>
             <add-button
                 :text="$gettext('Nuevo Anuncio')"
                 @click="doCreate"
             />
         </template>
 
-        <template #description>
-            {{ $gettext('Administra los anuncios publicitarios que se insertarán en las estaciones según su categoría y ubicación geográfica.') }}
-        </template>
-
         <data-table
             id="advertisements"
-            paginated
             :fields="fields"
-            :provider="listItemProvider"
+            :show-toolbar="false"
+            :provider="itemProvider"
         >
             <template #cell(name)="{item}">
                 <div class="typography-subheading">
@@ -141,7 +142,7 @@ const fields: DataTableField<Advertisement>[] = [
     }
 ];
 
-const {listItemProvider, relist} = useApiItemProvider<Advertisement>(
+const {itemProvider, relist} = useApiItemProvider<Advertisement>(
     listUrl,
     ['admin-advertisements', 'list']
 );
