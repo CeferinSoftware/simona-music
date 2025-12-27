@@ -87,7 +87,7 @@ import Icon from '~/components/Common/Icons/Icon.vue';
 import {
     IconMic,
     IconPublic,
-    IconSettingsSuggest as IconLocation
+    IconRadio as IconLocation
 } from '~/components/Common/Icons/icons.ts';
 
 interface Terraza {
