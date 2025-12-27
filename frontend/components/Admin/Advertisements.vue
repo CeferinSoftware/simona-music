@@ -32,7 +32,7 @@
                         class="badge"
                         :class="item.media_type === 'video' ? 'text-bg-primary' : 'text-bg-secondary'"
                     >
-                        <icon :icon="item.media_type === 'video' ? IconVideo : IconAudio" class="sm" />
+                        <icon :icon="item.media_type === 'video' ? IconVolumeUp : IconMusicNote" class="sm" />
                         {{ item.media_type === 'video' ? $gettext('Vídeo') : $gettext('Audio') }}
                     </span>
                 </template>
@@ -144,7 +144,7 @@ import {useApiItemProvider} from "~/functions/dataTable/useApiItemProvider.ts";
 import {useQuery} from "@tanstack/vue-query";
 import Loading from "~/components/Common/Loading.vue";
 import Icon from "~/components/Common/Icons/Icon.vue";
-import {IconVideo, IconAudio} from "~/components/Common/Icons/icons.ts";
+import {IconMusicNote, IconVolumeUp} from "~/components/Common/Icons/icons.ts";
 import AdvertisementsEditModal from "~/components/Admin/Advertisements/EditModal.vue";
 
 interface AdvertisementProps {
