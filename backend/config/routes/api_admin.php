@@ -314,6 +314,24 @@ return static function (RouteCollectorProxy $group) {
                 }
             )->add(new Middleware\Permissions(GlobalPermissions::All));
 
+            // Advertisements API
+            $group->group(
+                '/advertisements',
+                function (RouteCollectorProxy $group) {
+                    $group->get('', Controller\Api\Admin\AdvertisementsController::class . ':listAction')
+                        ->setName('api:admin:advertisements');
+
+                    $group->post('', Controller\Api\Admin\AdvertisementsController::class . ':createAction');
+
+                    $group->get('/{id}', Controller\Api\Admin\AdvertisementsController::class . ':getAction')
+                        ->setName('api:admin:advertisement');
+
+                    $group->put('/{id}', Controller\Api\Admin\AdvertisementsController::class . ':editAction');
+
+                    $group->delete('/{id}', Controller\Api\Admin\AdvertisementsController::class . ':deleteAction');
+                }
+            )->add(new Middleware\Permissions(GlobalPermissions::Settings));
+
             call_user_func(include(__DIR__ . '/api_admin_vue.php'), $group);
         }
     );

@@ -38,6 +38,10 @@ return static function (RouteCollectorProxy $app) {
             $group->get('/users', Controller\Api\Admin\Vue\UsersAction::class)
                 ->setName('api:vue:admin:users')
                 ->add(new Middleware\Permissions(GlobalPermissions::All));
+
+            $group->get('/advertisements', Controller\Api\Admin\Vue\AdvertisementsAction::class)
+                ->setName('api:vue:admin:advertisements')
+                ->add(new Middleware\Permissions(GlobalPermissions::Settings));
         }
     )->add(new Middleware\Permissions(GlobalPermissions::View))
         ->add(Middleware\RequireLogin::class);
