@@ -268,10 +268,10 @@ final class Station implements Stringable, IdentifiableEntityInterface
             description: "Categoría musical de la estación para segmentación de anuncios",
             example: "rock"
         ),
-        ORM\Column(type: 'string', length: 50, nullable: true, enumType: \App\Entity\Enums\AdCategories::class),
+        ORM\Column(type: 'string', length: 50, nullable: true),
         Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
     ]
-    public ?\App\Entity\Enums\AdCategories $ad_category = null;
+    public ?string $ad_category = null;
 
     #[
         OA\Property(
