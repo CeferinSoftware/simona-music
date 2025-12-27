@@ -214,10 +214,14 @@ final class AdvertisementsController extends AbstractApiCrudController
     }
 
     /**
-     * @param Advertisement $record
+     * @return Advertisement
      */
-    protected function fromArray(object $record, array $data, array $context = []): void
+    protected function fromArray(array $data, ?object $record = null, array $context = []): object
     {
+        if ($record === null) {
+            $record = new Advertisement();
+        }
+        
         if (isset($data['name'])) {
             $record->name = (string)$data['name'];
         }
@@ -275,5 +279,7 @@ final class AdvertisementsController extends AbstractApiCrudController
         if (isset($data['active_days'])) {
             $record->active_days = is_array($data['active_days']) ? $data['active_days'] : null;
         }
+        
+        return $record;
     }
 }
