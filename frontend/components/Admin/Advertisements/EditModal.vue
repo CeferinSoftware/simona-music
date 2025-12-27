@@ -80,22 +80,12 @@
                         :description="$gettext('URL externa del archivo de audio/vídeo.')"
                     />
 
-                    <div class="col-md-12">
-                        <label class="form-label">{{ $gettext('O subir archivo') }}</label>
-                        <flow-upload
-                            :target-url="uploadUrl"
-                            :valid-mime-types="form.media_type === 'video' ? ['video/*'] : ['audio/*']"
-                            @success="onUploadSuccess"
-                        />
-                    </div>
-
                     <form-group-field
-                        v-if="form.media_path"
                         id="form_media_path"
                         class="col-md-12"
                         :field="r$.media_path"
                         :label="$gettext('Ruta del Archivo')"
-                        readonly
+                        :description="$gettext('Ruta interna del archivo si se subió.')"
                     />
                 </div>
             </tab>
@@ -114,7 +104,7 @@
                                 <div class="form-check">
                                     <input
                                         :id="'cat_' + value"
-                                        v-model="form.categories"
+                                        v-model="form.target_categories"
                                         class="form-check-input"
                                         type="checkbox"
                                         :value="value"
@@ -128,67 +118,28 @@
                     </div>
 
                     <div class="col-md-12 mt-4">
-                        <label class="form-label">{{ $gettext('Ubicaciones Geográficas') }}</label>
-                        <p class="text-muted small">{{ $gettext('Añade ubicaciones específicas. Deja vacío para todas las ubicaciones.') }}</p>
-                        
-                        <div 
-                            v-for="(location, index) in form.locations" 
-                            :key="index"
-                            class="row g-2 mb-2 align-items-end"
-                        >
-                            <div class="col-md-4">
-                                <label class="form-label small">{{ $gettext('Provincia') }}</label>
-                                <select 
-                                    v-model="location.province"
-                                    class="form-select form-select-sm"
-                                >
-                                    <option value="">{{ $gettext('Seleccionar...') }}</option>
-                                    <option 
-                                        v-for="(label, value) in spanishProvinces" 
-                                        :key="value"
-                                        :value="value"
+                        <label class="form-label">{{ $gettext('Provincias Objetivo') }}</label>
+                        <p class="text-muted small">{{ $gettext('Selecciona las provincias donde se reproducirá este anuncio. Deja vacío para todas.') }}</p>
+                        <div class="row">
+                            <div 
+                                v-for="prov in spanishProvinces" 
+                                :key="prov"
+                                class="col-md-3 col-sm-4 col-6"
+                            >
+                                <div class="form-check">
+                                    <input
+                                        :id="'prov_' + prov"
+                                        v-model="form.target_provinces"
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        :value="prov"
                                     >
-                                        {{ label }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label small">{{ $gettext('Ciudad') }}</label>
-                                <input 
-                                    v-model="location.city"
-                                    type="text"
-                                    class="form-control form-control-sm"
-                                    :placeholder="$gettext('Opcional')"
-                                >
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label small">{{ $gettext('Sector') }}</label>
-                                <input 
-                                    v-model="location.sector"
-                                    type="text"
-                                    class="form-control form-control-sm"
-                                    :placeholder="$gettext('Opcional')"
-                                >
-                            </div>
-                            <div class="col-md-2">
-                                <button 
-                                    type="button"
-                                    class="btn btn-sm btn-danger w-100"
-                                    @click="removeLocation(index)"
-                                >
-                                    <icon :icon="IconDelete" />
-                                </button>
+                                    <label class="form-check-label" :for="'prov_' + prov">
+                                        {{ prov }}
+                                    </label>
+                                </div>
                             </div>
                         </div>
-
-                        <button 
-                            type="button"
-                            class="btn btn-sm btn-outline-primary"
-                            @click="addLocation"
-                        >
-                            <icon :icon="IconAdd" />
-                            {{ $gettext('Añadir Ubicación') }}
-                        </button>
                     </div>
                 </div>
             </tab>
@@ -280,20 +231,10 @@ import FormGroupField from "~/components/Form/FormGroupField.vue";
 import FormGroupSelect from "~/components/Form/FormGroupSelect.vue";
 import Tabs from "~/components/Common/Tabs.vue";
 import Tab from "~/components/Common/Tab.vue";
-import FlowUpload from "~/components/Common/FlowUpload.vue";
-import Icon from "~/components/Common/Icons/Icon.vue";
-import {IconDelete, IconAdd} from "~/components/Common/Icons/icons.ts";
 import {useAxios} from "~/vendor/axios.ts";
 import {useNotify} from "~/components/Common/Toasts/useNotify.ts";
-import {getApiUrl} from "~/router.ts";
 import {useAppRegle} from "~/vendor/regle.ts";
 import {required} from "@regle/rules";
-
-interface LocationForm {
-    province: string;
-    city: string | null;
-    sector: string | null;
-}
 
 interface FormData {
     name: string;
@@ -305,6 +246,9 @@ interface FormData {
     status: string;
     priority: number;
     advertiser_name: string | null;
+    target_categories: string[];
+    target_provinces: string[];
+    target_cities: string[];
     start_date: string | null;
     end_date: string | null;
     max_plays: number;
@@ -312,8 +256,6 @@ interface FormData {
     time_start: string | null;
     time_end: string | null;
     active_days: number[];
-    categories: string[];
-    locations: LocationForm[];
 }
 
 const props = defineProps<{
@@ -323,7 +265,7 @@ const props = defineProps<{
     statuses: Record<string, string>;
     weekDays: Record<number, string>;
     priorityOptions: Record<number, string>;
-    spanishProvinces: Record<string, string>;
+    spanishProvinces: string[];
 }>();
 
 const emit = defineEmits<{
@@ -333,8 +275,6 @@ const emit = defineEmits<{
 const {$gettext} = useTranslate();
 const {axios} = useAxios();
 const {notifySuccess, notifyError} = useNotify();
-
-const uploadUrl = getApiUrl('/admin/advertisements/upload');
 
 const $modal = ref<InstanceType<typeof ModalForm> | null>(null);
 const loading = ref(false);
@@ -353,6 +293,9 @@ const getDefaultForm = (): FormData => ({
     status: 'active',
     priority: 5,
     advertiser_name: null,
+    target_categories: [],
+    target_provinces: [],
+    target_cities: [],
     start_date: null,
     end_date: null,
     max_plays: 0,
@@ -360,8 +303,6 @@ const getDefaultForm = (): FormData => ({
     time_start: null,
     time_end: null,
     active_days: [1, 2, 3, 4, 5, 6, 7],
-    categories: [],
-    locations: [],
 });
 
 const form = ref<FormData>(getDefaultForm());
@@ -392,18 +333,6 @@ const priorityOptionsFormatted = computed(() => {
     return options;
 });
 
-const addLocation = () => {
-    form.value.locations.push({
-        province: '',
-        city: null,
-        sector: null
-    });
-};
-
-const removeLocation = (index: number) => {
-    form.value.locations.splice(index, 1);
-};
-
 const clearContents = () => {
     form.value = getDefaultForm();
     editUrl.value = null;
@@ -425,8 +354,9 @@ const edit = async (recordUrl: string) => {
         form.value = {
             ...getDefaultForm(),
             ...data,
-            categories: data.categories || [],
-            locations: data.locations || [],
+            target_categories: data.target_categories || [],
+            target_provinces: data.target_provinces || [],
+            target_cities: data.target_cities || [],
             active_days: data.active_days || [1, 2, 3, 4, 5, 6, 7],
         };
         $modal.value?.show();
@@ -447,12 +377,8 @@ const doSubmit = async () => {
     error.value = null;
 
     try {
-        // Filtrar ubicaciones vacías
-        const locationsToSend = form.value.locations.filter(loc => loc.province);
-
         const dataToSend = {
             ...form.value,
-            locations: locationsToSend,
         };
 
         if (isEditMode.value) {
@@ -469,12 +395,6 @@ const doSubmit = async () => {
         error.value = e.response?.data?.message || $gettext('Error al guardar el anuncio.');
     } finally {
         loading.value = false;
-    }
-};
-
-const onUploadSuccess = (file: any, message: any) => {
-    if (message?.uploadedPath) {
-        form.value.media_path = message.uploadedPath;
     }
 };
 

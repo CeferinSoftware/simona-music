@@ -8,18 +8,15 @@ use App\Controller\Api\AbstractApiCrudController;
 use App\Controller\Api\Traits\CanSearchResults;
 use App\Controller\Api\Traits\CanSortResults;
 use App\Entity\Advertisement;
-use App\Entity\AdvertisementCategory;
-use App\Entity\AdvertisementLocation;
-use App\Entity\Enums\AdCategories;
 use App\Entity\Enums\AdMediaType;
 use App\Entity\Enums\AdStatus;
-use App\Entity\Repository\AdvertisementRepository;
 use App\Http\Response;
 use App\Http\ServerRequest;
 use App\OpenApi;
 use OpenApi\Attributes as OA;
 use Psr\Http\Message\ResponseInterface;
 
+/** @extends AbstractApiCrudController<Advertisement> */
 #[
     OA\Get(
         path: '/admin/advertisements',
@@ -31,13 +28,8 @@ use Psr\Http\Message\ResponseInterface;
             new OA\Response(
                 response: 200,
                 description: 'Success',
-                content: new OA\JsonContent(
-                    type: 'array',
-                    items: new OA\Items(ref: '#/components/schemas/Advertisement')
-                )
             ),
             new OA\Response(ref: OpenApi::REF_RESPONSE_ACCESS_DENIED, response: 403),
-            new OA\Response(ref: OpenApi::REF_RESPONSE_NOT_FOUND, response: 404),
             new OA\Response(ref: OpenApi::REF_RESPONSE_GENERIC_ERROR, response: 500),
         ]
     ),
@@ -46,15 +38,11 @@ use Psr\Http\Message\ResponseInterface;
         operationId: 'adminAddAdvertisement',
         description: 'Crea un nuevo anuncio.',
         security: OpenApi::API_KEY_SECURITY,
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(ref: '#/components/schemas/Advertisement')
-        ),
         tags: ['Administration: Advertisements'],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Success',
-                content: new OA\JsonContent(ref: '#/components/schemas/Advertisement')
             ),
             new OA\Response(ref: OpenApi::REF_RESPONSE_ACCESS_DENIED, response: 403),
             new OA\Response(ref: OpenApi::REF_RESPONSE_GENERIC_ERROR, response: 500),
@@ -79,7 +67,6 @@ use Psr\Http\Message\ResponseInterface;
             new OA\Response(
                 response: 200,
                 description: 'Success',
-                content: new OA\JsonContent(ref: '#/components/schemas/Advertisement')
             ),
             new OA\Response(ref: OpenApi::REF_RESPONSE_ACCESS_DENIED, response: 403),
             new OA\Response(ref: OpenApi::REF_RESPONSE_NOT_FOUND, response: 404),
@@ -91,9 +78,6 @@ use Psr\Http\Message\ResponseInterface;
         operationId: 'adminEditAdvertisement',
         description: 'Actualiza un anuncio existente.',
         security: OpenApi::API_KEY_SECURITY,
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(ref: '#/components/schemas/Advertisement')
-        ),
         tags: ['Administration: Advertisements'],
         parameters: [
             new OA\Parameter(
@@ -142,11 +126,6 @@ final class AdvertisementsController extends AbstractApiCrudController
     protected string $entityClass = Advertisement::class;
     protected string $resourceRouteName = 'api:admin:advertisement';
 
-    public function __construct(
-        private readonly AdvertisementRepository $advertisementRepo
-    ) {
-    }
-
     public function listAction(
         ServerRequest $request,
         Response $response,
@@ -165,8 +144,6 @@ final class AdvertisementsController extends AbstractApiCrudController
                 'name' => 'a.name',
                 'status' => 'a.status',
                 'priority' => 'a.priority',
-                'play_count' => 'a.play_count',
-                'created_at' => 'a.created_at',
             ],
             'a.priority',
             'DESC'
@@ -185,122 +162,23 @@ final class AdvertisementsController extends AbstractApiCrudController
         return $this->listPaginatedFromQuery($request, $response, $qb->getQuery());
     }
 
-    public function getAction(
-        ServerRequest $request,
-        Response $response,
-        array $params
-    ): ResponseInterface {
-        $record = $this->getRecord($params);
+    protected function viewRecord(object $record, ServerRequest $request): mixed
+    {
+        /** @var Advertisement $record */
+        $return = $this->toArray($record);
 
-        if ($record === null) {
-            return $response->withStatus(404)
-                ->withJson(['error' => 'Anuncio no encontrado']);
-        }
+        $isInternal = $request->isInternal();
+        $router = $request->getRouter();
 
-        return $response->withJson($this->toArray($record));
-    }
+        $return['links'] = [
+            'self' => $router->fromHere(
+                routeName: $this->resourceRouteName,
+                routeParams: ['id' => $record->id],
+                absolute: !$isInternal
+            ),
+        ];
 
-    public function createAction(
-        ServerRequest $request,
-        Response $response,
-        array $params
-    ): ResponseInterface {
-        $data = (array)$request->getParsedBody();
-
-        $ad = new Advertisement();
-        $this->fromArray($ad, $data);
-        
-        // Procesar categorías
-        if (isset($data['categories']) && is_array($data['categories'])) {
-            foreach ($data['categories'] as $categoryValue) {
-                $category = AdCategories::tryFrom($categoryValue);
-                if ($category !== null) {
-                    $ad->addCategory($category);
-                }
-            }
-        }
-
-        // Procesar ubicaciones
-        if (isset($data['locations']) && is_array($data['locations'])) {
-            foreach ($data['locations'] as $locationData) {
-                if (isset($locationData['province'])) {
-                    $ad->addLocation(
-                        $locationData['province'],
-                        $locationData['city'] ?? null,
-                        $locationData['sector'] ?? null
-                    );
-                }
-            }
-        }
-
-        $this->em->persist($ad);
-        $this->em->flush();
-
-        return $response->withJson($this->toArray($ad));
-    }
-
-    public function editAction(
-        ServerRequest $request,
-        Response $response,
-        array $params
-    ): ResponseInterface {
-        $record = $this->getRecord($params);
-
-        if ($record === null) {
-            return $response->withStatus(404)
-                ->withJson(['error' => 'Anuncio no encontrado']);
-        }
-
-        $data = (array)$request->getParsedBody();
-        $this->fromArray($record, $data);
-
-        // Actualizar categorías
-        if (isset($data['categories']) && is_array($data['categories'])) {
-            $record->clearCategories();
-            foreach ($data['categories'] as $categoryValue) {
-                $category = AdCategories::tryFrom($categoryValue);
-                if ($category !== null) {
-                    $record->addCategory($category);
-                }
-            }
-        }
-
-        // Actualizar ubicaciones
-        if (isset($data['locations']) && is_array($data['locations'])) {
-            $record->clearLocations();
-            foreach ($data['locations'] as $locationData) {
-                if (isset($locationData['province'])) {
-                    $record->addLocation(
-                        $locationData['province'],
-                        $locationData['city'] ?? null,
-                        $locationData['sector'] ?? null
-                    );
-                }
-            }
-        }
-
-        $this->em->persist($record);
-        $this->em->flush();
-
-        return $response->withJson($this->toArray($record));
-    }
-
-    public function deleteAction(
-        ServerRequest $request,
-        Response $response,
-        array $params
-    ): ResponseInterface {
-        $record = $this->getRecord($params);
-
-        if ($record === null) {
-            return $response->withStatus(404)
-                ->withJson(['error' => 'Anuncio no encontrado']);
-        }
-
-        $this->em->remove($record);
-        $this->em->flush();
-
-        return $response->withJson(['success' => true]);
+        return $return;
     }
 
     /**
@@ -308,22 +186,6 @@ final class AdvertisementsController extends AbstractApiCrudController
      */
     protected function toArray(object $record, array $context = []): array
     {
-        $categories = [];
-        foreach ($record->categories as $cat) {
-            $categories[] = $cat->category->value;
-        }
-
-        $locations = [];
-        foreach ($record->locations as $loc) {
-            $locations[] = [
-                'id' => $loc->id,
-                'province' => $loc->province,
-                'city' => $loc->city,
-                'sector' => $loc->sector,
-                'full_location' => $loc->getFullLocation(),
-            ];
-        }
-
         return [
             'id' => $record->id,
             'name' => $record->name,
@@ -335,6 +197,9 @@ final class AdvertisementsController extends AbstractApiCrudController
             'status' => $record->status->value,
             'priority' => $record->priority,
             'advertiser_name' => $record->advertiser_name,
+            'target_categories' => $record->target_categories,
+            'target_provinces' => $record->target_provinces,
+            'target_cities' => $record->target_cities,
             'start_date' => $record->start_date?->format('Y-m-d H:i:s'),
             'end_date' => $record->end_date?->format('Y-m-d H:i:s'),
             'max_plays' => $record->max_plays,
@@ -343,23 +208,18 @@ final class AdvertisementsController extends AbstractApiCrudController
             'time_start' => $record->time_start,
             'time_end' => $record->time_end,
             'active_days' => $record->active_days,
-            'categories' => $categories,
-            'locations' => $locations,
-            'created_at' => $record->created_at->format('Y-m-d H:i:s'),
-            'updated_at' => $record->updated_at->format('Y-m-d H:i:s'),
-            'links' => [
-                'self' => $this->router->fromHere($this->resourceRouteName, ['id' => $record->id]),
-            ],
+            'created_at' => $record->created_at?->format('Y-m-d H:i:s'),
+            'updated_at' => $record->updated_at?->format('Y-m-d H:i:s'),
         ];
     }
 
     /**
      * @param Advertisement $record
      */
-    protected function fromArray(object $record, array $data): void
+    protected function fromArray(object $record, array $data, array $context = []): void
     {
         if (isset($data['name'])) {
-            $record->name = $data['name'];
+            $record->name = (string)$data['name'];
         }
         if (isset($data['description'])) {
             $record->description = $data['description'];
@@ -385,6 +245,15 @@ final class AdvertisementsController extends AbstractApiCrudController
         if (isset($data['advertiser_name'])) {
             $record->advertiser_name = $data['advertiser_name'];
         }
+        if (isset($data['target_categories'])) {
+            $record->target_categories = is_array($data['target_categories']) ? $data['target_categories'] : null;
+        }
+        if (isset($data['target_provinces'])) {
+            $record->target_provinces = is_array($data['target_provinces']) ? $data['target_provinces'] : null;
+        }
+        if (isset($data['target_cities'])) {
+            $record->target_cities = is_array($data['target_cities']) ? $data['target_cities'] : null;
+        }
         if (isset($data['start_date']) && !empty($data['start_date'])) {
             $record->start_date = new \DateTime($data['start_date']);
         }
@@ -404,13 +273,7 @@ final class AdvertisementsController extends AbstractApiCrudController
             $record->time_end = $data['time_end'];
         }
         if (isset($data['active_days'])) {
-            $record->active_days = $data['active_days'];
+            $record->active_days = is_array($data['active_days']) ? $data['active_days'] : null;
         }
-    }
-
-    private function getRecord(array $params): ?Advertisement
-    {
-        $id = (int)($params['id'] ?? 0);
-        return $this->em->find(Advertisement::class, $id);
     }
 }

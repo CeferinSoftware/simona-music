@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Entity\Enums\AdCategories;
 use App\Entity\Enums\AdMediaType;
 use App\Entity\Enums\AdStatus;
 use App\Entity\Interfaces\EntityGroupsInterface;
 use App\Entity\Interfaces\IdentifiableEntityInterface;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Serializer\Annotation as Serializer;
@@ -24,8 +21,6 @@ use Symfony\Component\Validator\Constraints as Assert;
     OA\Schema(schema: "Advertisement", type: "object"),
     ORM\Entity,
     ORM\Table(name: 'advertisements'),
-    ORM\Index(name: 'idx_ad_status', columns: ['status']),
-    ORM\Index(name: 'idx_ad_category', columns: ['category']),
     ORM\HasLifecycleCallbacks
 ]
 class Advertisement implements IdentifiableEntityInterface
@@ -99,6 +94,27 @@ class Advertisement implements IdentifiableEntityInterface
     public ?string $advertiser_name = null;
 
     #[
+        OA\Property(description: "Categorías musicales objetivo (JSON array)"),
+        ORM\Column(type: 'json', nullable: true),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public ?array $target_categories = null;
+
+    #[
+        OA\Property(description: "Provincias objetivo (JSON array)"),
+        ORM\Column(type: 'json', nullable: true),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public ?array $target_provinces = null;
+
+    #[
+        OA\Property(description: "Ciudades objetivo (JSON array)"),
+        ORM\Column(type: 'json', nullable: true),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public ?array $target_cities = null;
+
+    #[
         OA\Property(description: "Fecha de inicio de validez del anuncio"),
         ORM\Column(type: 'datetime', nullable: true),
         Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
@@ -166,25 +182,10 @@ class Advertisement implements IdentifiableEntityInterface
     ]
     public \DateTimeInterface $updated_at;
 
-    /** @var Collection<int, AdvertisementCategory> */
-    #[ORM\OneToMany(targetEntity: AdvertisementCategory::class, mappedBy: 'advertisement', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    public Collection $categories;
-
-    /** @var Collection<int, AdvertisementLocation> */
-    #[ORM\OneToMany(targetEntity: AdvertisementLocation::class, mappedBy: 'advertisement', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    public Collection $locations;
-
-    /** @var Collection<int, AdvertisementPlayLog> */
-    #[ORM\OneToMany(targetEntity: AdvertisementPlayLog::class, mappedBy: 'advertisement', cascade: ['remove'])]
-    public Collection $play_logs;
-
     public function __construct()
     {
         $this->created_at = new \DateTime();
         $this->updated_at = new \DateTime();
-        $this->categories = new ArrayCollection();
-        $this->locations = new ArrayCollection();
-        $this->play_logs = new ArrayCollection();
         $this->active_days = [1, 2, 3, 4, 5, 6, 7]; // Todos los días por defecto
     }
 
@@ -194,68 +195,25 @@ class Advertisement implements IdentifiableEntityInterface
         $this->updated_at = new \DateTime();
     }
 
-    public function addCategory(AdCategories $category): void
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
     {
-        foreach ($this->categories as $existingCategory) {
-            if ($existingCategory->category === $category) {
-                return;
-            }
-        }
-        
-        $adCategory = new AdvertisementCategory($this, $category);
-        $this->categories->add($adCategory);
-    }
-
-    public function removeCategory(AdCategories $category): void
-    {
-        foreach ($this->categories as $key => $existingCategory) {
-            if ($existingCategory->category === $category) {
-                $this->categories->removeElement($existingCategory);
-                return;
-            }
-        }
+        $this->created_at = new \DateTime();
+        $this->updated_at = new \DateTime();
     }
 
     /**
-     * @return AdCategories[]
+     * Verifica si el anuncio está activo y válido para reproducirse.
      */
-    public function getCategoryValues(): array
-    {
-        $values = [];
-        foreach ($this->categories as $category) {
-            $values[] = $category->category;
-        }
-        return $values;
-    }
-
-    public function addLocation(string $province, ?string $city = null, ?string $sector = null): void
-    {
-        $location = new AdvertisementLocation($this, $province, $city, $sector);
-        $this->locations->add($location);
-    }
-
-    public function clearLocations(): void
-    {
-        $this->locations->clear();
-    }
-
-    public function clearCategories(): void
-    {
-        $this->categories->clear();
-    }
-
-    /**
-     * Verifica si el anuncio está activo para una ubicación y categoría específicas.
-     */
-    public function isActiveFor(?string $province = null, ?string $city = null, ?string $sector = null, ?AdCategories $category = null): bool
+    public function isPlayable(): bool
     {
         if ($this->status !== AdStatus::Active) {
             return false;
         }
 
         $now = new \DateTime();
-        
-        // Verificar fechas
+
+        // Verificar fechas de validez
         if ($this->start_date !== null && $now < $this->start_date) {
             return false;
         }
@@ -263,7 +221,7 @@ class Advertisement implements IdentifiableEntityInterface
             return false;
         }
 
-        // Verificar max plays
+        // Verificar límite de reproducciones
         if ($this->max_plays > 0 && $this->play_count >= $this->max_plays) {
             return false;
         }
@@ -278,36 +236,8 @@ class Advertisement implements IdentifiableEntityInterface
 
         // Verificar día de la semana
         if ($this->active_days !== null && !empty($this->active_days)) {
-            $currentDay = (int)$now->format('N');
+            $currentDay = (int)$now->format('N'); // 1 = Monday, 7 = Sunday
             if (!in_array($currentDay, $this->active_days, true)) {
-                return false;
-            }
-        }
-
-        // Verificar categoría si se especificó
-        if ($category !== null && !$this->categories->isEmpty()) {
-            $matchesCategory = false;
-            foreach ($this->categories as $adCategory) {
-                if ($adCategory->category === $category) {
-                    $matchesCategory = true;
-                    break;
-                }
-            }
-            if (!$matchesCategory) {
-                return false;
-            }
-        }
-
-        // Verificar ubicación si se especificó
-        if ($province !== null && !$this->locations->isEmpty()) {
-            $matchesLocation = false;
-            foreach ($this->locations as $location) {
-                if ($location->matchesLocation($province, $city, $sector)) {
-                    $matchesLocation = true;
-                    break;
-                }
-            }
-            if (!$matchesLocation) {
                 return false;
             }
         }
@@ -315,13 +245,52 @@ class Advertisement implements IdentifiableEntityInterface
         return true;
     }
 
+    /**
+     * Verifica si el anuncio es válido para una estación específica.
+     */
+    public function matchesStation(Station $station): bool
+    {
+        // Si no hay restricciones, aplica a todas las estaciones
+        $hasRestrictions = !empty($this->target_categories) || 
+                           !empty($this->target_provinces) || 
+                           !empty($this->target_cities);
+
+        if (!$hasRestrictions) {
+            return true;
+        }
+
+        // Verificar categoría
+        if (!empty($this->target_categories)) {
+            $stationCategory = $station->ad_category ?? null;
+            if ($stationCategory !== null && !in_array($stationCategory, $this->target_categories, true)) {
+                return false;
+            }
+        }
+
+        // Verificar provincia
+        if (!empty($this->target_provinces)) {
+            $stationProvince = $station->province ?? null;
+            if ($stationProvince !== null && !in_array($stationProvince, $this->target_provinces, true)) {
+                return false;
+            }
+        }
+
+        // Verificar ciudad
+        if (!empty($this->target_cities)) {
+            $stationCity = $station->city ?? null;
+            if ($stationCity !== null && !in_array($stationCity, $this->target_cities, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Incrementa el contador de reproducciones.
+     */
     public function incrementPlayCount(): void
     {
         $this->play_count++;
-    }
-
-    public function __toString(): string
-    {
-        return $this->name ?: 'Nuevo Anuncio';
     }
 }

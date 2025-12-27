@@ -47,32 +47,32 @@
                 </template>
 
                 <template #cell(categories)="{item}">
-                    <div v-if="item.categories && item.categories.length">
+                    <div v-if="item.target_categories && item.target_categories.length">
                         <span 
-                            v-for="cat in item.categories.slice(0, 3)" 
+                            v-for="cat in item.target_categories.slice(0, 3)" 
                             :key="cat"
                             class="badge text-bg-info me-1"
                         >
                             {{ getCategoryLabel(cat) }}
                         </span>
-                        <span v-if="item.categories.length > 3" class="text-muted">
-                            +{{ item.categories.length - 3 }}
+                        <span v-if="item.target_categories.length > 3" class="text-muted">
+                            +{{ item.target_categories.length - 3 }}
                         </span>
                     </div>
                     <span v-else class="text-muted">{{ $gettext('Todas') }}</span>
                 </template>
 
                 <template #cell(locations)="{item}">
-                    <div v-if="item.locations && item.locations.length">
+                    <div v-if="item.target_provinces && item.target_provinces.length">
                         <span 
-                            v-for="loc in item.locations.slice(0, 2)" 
-                            :key="loc.id"
+                            v-for="prov in item.target_provinces.slice(0, 2)" 
+                            :key="prov"
                             class="badge text-bg-secondary me-1"
                         >
-                            {{ loc.province }}{{ loc.city ? ` - ${loc.city}` : '' }}
+                            {{ prov }}
                         </span>
-                        <span v-if="item.locations.length > 2" class="text-muted">
-                            +{{ item.locations.length - 2 }}
+                        <span v-if="item.target_provinces.length > 2" class="text-muted">
+                            +{{ item.target_provinces.length - 2 }}
                         </span>
                     </div>
                     <span v-else class="text-muted">{{ $gettext('Todas') }}</span>
@@ -153,7 +153,7 @@ interface AdvertisementProps {
     statuses: Record<string, string>;
     weekDays: Record<number, string>;
     priorityOptions: Record<number, string>;
-    spanishProvinces: Record<string, string>;
+    spanishProvinces: string[];
 }
 
 interface Advertisement {
@@ -164,8 +164,9 @@ interface Advertisement {
     status: string;
     priority: number;
     play_count: number;
-    categories: string[];
-    locations: Array<{id: number; province: string; city: string | null; sector: string | null}>;
+    target_categories: string[] | null;
+    target_provinces: string[] | null;
+    target_cities: string[] | null;
     links: {
         self: string;
     };
