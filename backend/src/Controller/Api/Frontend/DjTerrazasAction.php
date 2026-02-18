@@ -91,7 +91,7 @@ final class DjTerrazasAction implements SingleActionInterface
     private function buildTerrazaInfo(Station $station, $router): array
     {
         // Check if station is online by looking at frontend/backend status
-        $isOnline = $station->is_enabled && $station->hasValidFrontend();
+        $isOnline = $station->hasLocalServices();
 
         return [
             'id' => $station->id,
