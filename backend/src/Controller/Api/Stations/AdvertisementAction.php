@@ -71,6 +71,12 @@ final class AdvertisementAction
                 $ad = $ads[0] ?? null;
                 
                 if ($ad !== null) {
+                    // Enforce minimum duration (30s for video, 10s for audio)
+                    $effectiveDuration = (int) $ad->duration;
+                    if ($effectiveDuration <= 0) {
+                        $effectiveDuration = $ad->media_type->value === 'video' ? 30 : 10;
+                    }
+                    
                     $adData = [
                         'is_ad_playing' => true,
                         'ad' => [
@@ -80,12 +86,12 @@ final class AdvertisementAction
                             'media_type' => $ad->media_type->value,
                             'media_url' => $ad->media_url,
                             'media_path' => $ad->media_path,
-                            'duration' => $ad->duration,
+                            'duration' => $effectiveDuration,
                         ],
                     ];
                     
-                    // Cache for the duration of the ad
-                    $cacheTtl = max(5, (int) $ad->duration);
+                    // Cache for the duration of the ad + buffer
+                    $cacheTtl = $effectiveDuration + 10;
                     $this->cache->set($cacheKey, $adData, $cacheTtl);
                 }
                 

@@ -133,7 +133,12 @@ final class AdQueueBuilder implements EventSubscriberInterface
     private function setVideoAdCache(Station $station, Advertisement $ad): void
     {
         $cacheKey = self::VIDEO_AD_CACHE_PREFIX . $station->id;
-        $duration = max(5, (int) $ad->duration);
+        // Minimum 30 seconds for video ads (YouTube videos need time to load and play)
+        $effectiveDuration = (int) $ad->duration;
+        if ($effectiveDuration <= 0) {
+            $effectiveDuration = 30; // Default 30 seconds for video ads with no duration set
+        }
+        $cacheTtl = $effectiveDuration + 10; // Cache lives a bit longer than the ad
         
         $adData = [
             'is_ad_playing' => true,
@@ -144,16 +149,17 @@ final class AdQueueBuilder implements EventSubscriberInterface
                 'media_type' => $ad->media_type->value,
                 'media_url' => $ad->media_url,
                 'media_path' => $ad->media_path,
-                'duration' => $ad->duration,
+                'duration' => $effectiveDuration,
             ],
         ];
         
-        $this->cache->set($cacheKey, $adData, $duration);
+        $this->cache->set($cacheKey, $adData, $cacheTtl);
         
         $this->logger->info('Video ad cache set for frontend overlay.', [
             'station_id' => $station->id,
             'ad_id' => $ad->id,
-            'cache_ttl' => $duration,
+            'effective_duration' => $effectiveDuration,
+            'cache_ttl' => $cacheTtl,
         ]);
     }
 

@@ -150,7 +150,9 @@ async function checkForAd() {
 
 function startCountdown(duration: number) {
     stopCountdown();
-    countdown.value = Math.ceil(duration);
+    // Enforce minimum 15 seconds for the ad overlay
+    const effectiveDuration = duration > 0 ? duration : 30;
+    countdown.value = Math.ceil(effectiveDuration);
     
     countdownInterval = setInterval(() => {
         countdown.value--;
@@ -170,9 +172,9 @@ function stopCountdown() {
 }
 
 onMounted(() => {
-    // Poll every 5 seconds for ad state
+    // Poll every 3 seconds for ad state (needs to be fast enough to catch ads)
     checkForAd();
-    pollInterval = setInterval(checkForAd, 5000);
+    pollInterval = setInterval(checkForAd, 3000);
 });
 
 onUnmounted(() => {
