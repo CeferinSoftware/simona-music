@@ -8,8 +8,10 @@ use App\Controller\SingleActionInterface;
 use App\Entity\Enums\AdCategories;
 use App\Entity\Enums\AdMediaType;
 use App\Entity\Enums\AdStatus;
+use App\Entity\Station;
 use App\Http\Response;
 use App\Http\ServerRequest;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -17,15 +19,29 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class AdvertisementsAction implements SingleActionInterface
 {
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+    ) {
+    }
+
     public function __invoke(
         ServerRequest $request,
         Response $response,
         array $params
     ): ResponseInterface {
+        // Obtener lista de estaciones/terrazas para selección
+        $stations = $this->em->createQueryBuilder()
+            ->select('s.id', 's.name', 's.short_name', 's.ad_category', 's.province', 's.city', 's.is_enabled')
+            ->from(Station::class, 's')
+            ->orderBy('s.name', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
         return $response->withJson([
             'categories' => AdCategories::getOptions(),
             'mediaTypes' => AdMediaType::getOptions(),
             'statuses' => AdStatus::getOptions(),
+            'stations' => $stations,
             'weekDays' => [
                 1 => 'Lunes',
                 2 => 'Martes',

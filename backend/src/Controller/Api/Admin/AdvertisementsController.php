@@ -201,6 +201,7 @@ final class AdvertisementsController extends AbstractApiCrudController
             'target_categories' => $record->target_categories,
             'target_provinces' => $record->target_provinces,
             'target_cities' => $record->target_cities,
+            'target_stations' => $record->target_stations,
             'start_date' => $record->start_date?->format('Y-m-d H:i:s'),
             'end_date' => $record->end_date?->format('Y-m-d H:i:s'),
             'max_plays' => $record->max_plays,
@@ -258,6 +259,9 @@ final class AdvertisementsController extends AbstractApiCrudController
         }
         if (isset($data['target_cities'])) {
             $record->target_cities = is_array($data['target_cities']) ? $data['target_cities'] : null;
+        }
+        if (isset($data['target_stations'])) {
+            $record->target_stations = is_array($data['target_stations']) ? $data['target_stations'] : null;
         }
         if (isset($data['start_date']) && !empty($data['start_date'])) {
             $record->start_date = new \DateTime($data['start_date']);

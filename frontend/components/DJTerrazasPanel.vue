@@ -4,7 +4,7 @@
             <div class="col-12">
                 <h1>{{ $gettext('Panel DJ - Terrazas Disponibles') }}</h1>
                 <p class="text-muted">
-                    {{ $gettext('Selecciona una terraza para comenzar a transmitir como DJ.') }}
+                    {{ $gettext('Controla las terrazas: salta canciones, cambia listas y sube música directamente.') }}
                 </p>
             </div>
         </div>
@@ -37,7 +37,7 @@
                                 {{ terraza.description }}
                             </p>
                             
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <div v-if="terraza.province || terraza.city || terraza.sector" class="mb-2">
                                     <icon :icon="IconLocation" class="me-1 text-muted" />
                                     <span class="small">
@@ -47,12 +47,18 @@
                                     </span>
                                 </div>
                             </div>
+
+                            <!-- Mini Player -->
+                            <mini-player
+                                :station-id="terraza.id"
+                                :is-online="terraza.is_online"
+                            />
                         </div>
                         <div class="card-footer bg-transparent border-top">
                             <div class="d-grid gap-2">
                                 <a
                                     :href="terraza.webdj_url"
-                                    class="btn btn-primary"
+                                    class="btn btn-sm btn-primary"
                                     :class="{ disabled: !terraza.is_online }"
                                     target="_blank"
                                 >
@@ -61,7 +67,7 @@
                                 </a>
                                 <a
                                     :href="terraza.public_page_url"
-                                    class="btn btn-outline-secondary"
+                                    class="btn btn-sm btn-outline-secondary"
                                     target="_blank"
                                 >
                                     <icon :icon="IconPublic" class="me-1" />
@@ -84,6 +90,7 @@ import {getApiUrl} from '~/router.ts';
 import DashboardNoSidebar from '~/components/Layout/DashboardNoSidebar.vue';
 import Loading from '~/components/Common/Loading.vue';
 import Icon from '~/components/Common/Icons/Icon.vue';
+import MiniPlayer from '~/components/DJTerrazas/MiniPlayer.vue';
 import {
     IconMic,
     IconPublic,

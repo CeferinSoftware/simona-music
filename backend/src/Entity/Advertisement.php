@@ -115,6 +115,13 @@ class Advertisement implements IdentifiableEntityInterface
     public ?array $target_cities = null;
 
     #[
+        OA\Property(description: "IDs de estaciones/terrazas objetivo (JSON array)"),
+        ORM\Column(type: 'json', nullable: true),
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+    ]
+    public ?array $target_stations = null;
+
+    #[
         OA\Property(description: "Fecha de inicio de validez del anuncio"),
         ORM\Column(type: 'datetime', nullable: true),
         Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
@@ -250,6 +257,11 @@ class Advertisement implements IdentifiableEntityInterface
      */
     public function matchesStation(Station $station): bool
     {
+        // Si se especifican estaciones concretas, verificar primero
+        if (!empty($this->target_stations)) {
+            return in_array($station->getId(), $this->target_stations, false);
+        }
+
         // Si no hay restricciones, aplica a todas las estaciones
         $hasRestrictions = !empty($this->target_categories) || 
                            !empty($this->target_provinces) || 
