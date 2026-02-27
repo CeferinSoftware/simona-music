@@ -103,7 +103,7 @@ final class DjTerrazasAction implements SingleActionInterface
             'city' => $station->city ?? null,
             'sector' => $station->sector ?? null,
             'webdj_url' => (string)$router->named(
-                'stations:index:webdj',
+                'public:dj',
                 ['station_id' => $station->short_name]
             ),
             'public_page_url' => (string)$router->named(
