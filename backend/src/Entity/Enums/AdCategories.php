@@ -10,18 +10,21 @@ namespace App\Entity\Enums;
  */
 enum AdCategories: string
 {
-    case Rock = 'rock';
-    case Pop = 'pop';
-    case Electronic = 'electronic';
-    case HipHop = 'hiphop';
     case Reggaeton = 'reggaeton';
     case Bachata = 'bachata';
+    case Merengue = 'merengue';
+    case Dembow = 'dembow';
     case Salsa = 'salsa';
+    case Tipico = 'tipico';
+    case Latin = 'latin';
+    case Pop = 'pop';
+    case Rock = 'rock';
+    case Electronic = 'electronic';
+    case HipHop = 'hiphop';
+    case RnB = 'rnb';
     case Jazz = 'jazz';
     case Classical = 'classical';
     case Country = 'country';
-    case RnB = 'rnb';
-    case Latin = 'latin';
     case Indie = 'indie';
     case Metal = 'metal';
     case Folk = 'folk';
@@ -38,7 +41,10 @@ enum AdCategories: string
     case Lounge = 'lounge';
     case Chillout = 'chillout';
     case World = 'world';
-    case Flamenco = 'flamenco';
+    case Urbano = 'urbano';
+    case Tropical = 'tropical';
+    case Vallenato = 'vallenato';
+    case Cumbia = 'cumbia';
     case Other = 'other';
 
     public static function getOptions(): array
@@ -53,18 +59,21 @@ enum AdCategories: string
     public static function getLabel(self $category): string
     {
         return match ($category) {
-            self::Rock => 'Rock',
-            self::Pop => 'Pop',
-            self::Electronic => 'Electrónica',
-            self::HipHop => 'Hip Hop',
             self::Reggaeton => 'Reggaeton',
             self::Bachata => 'Bachata',
+            self::Merengue => 'Merengue',
+            self::Dembow => 'Dembow',
             self::Salsa => 'Salsa',
+            self::Tipico => 'Típico / Merengue Típico',
+            self::Latin => 'Latina',
+            self::Pop => 'Pop',
+            self::Rock => 'Rock',
+            self::Electronic => 'Electrónica',
+            self::HipHop => 'Hip Hop / Rap',
+            self::RnB => 'R&B',
             self::Jazz => 'Jazz',
             self::Classical => 'Clásica',
             self::Country => 'Country',
-            self::RnB => 'R&B',
-            self::Latin => 'Latina',
             self::Indie => 'Indie',
             self::Metal => 'Metal',
             self::Folk => 'Folk',
@@ -81,7 +90,10 @@ enum AdCategories: string
             self::Lounge => 'Lounge',
             self::Chillout => 'Chillout',
             self::World => 'World Music',
-            self::Flamenco => 'Flamenco',
+            self::Urbano => 'Urbano',
+            self::Tropical => 'Tropical',
+            self::Vallenato => 'Vallenato',
+            self::Cumbia => 'Cumbia',
             self::Other => 'Otros',
         };
     }
