@@ -14,8 +14,8 @@
 
         <data-table
             id="advertisements"
+            paginated
             :fields="fields"
-            :show-toolbar="false"
             :provider="itemProvider"
         >
             <template #cell(name)="{item}">
@@ -142,10 +142,14 @@ const fields: DataTableField<Advertisement>[] = [
     }
 ];
 
-const {itemProvider, relist} = useApiItemProvider<Advertisement>(
+const itemProvider = useApiItemProvider<Advertisement>(
     listUrl,
     ['admin-advertisements', 'list']
 );
+
+const relist = () => {
+    void itemProvider.refresh();
+};
 
 const $editModal = useTemplateRef('$editModal');
 
