@@ -259,7 +259,7 @@ class Advertisement implements IdentifiableEntityInterface
     {
         // Si se especifican estaciones concretas, verificar primero
         if (!empty($this->target_stations)) {
-            return in_array($station->getId(), $this->target_stations, false);
+            return in_array($station->id, $this->target_stations, false);
         }
 
         // Si no hay restricciones, aplica a todas las estaciones
