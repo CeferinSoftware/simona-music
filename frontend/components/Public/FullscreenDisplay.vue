@@ -3,6 +3,9 @@
         <!-- QR Widget en posición fija -->
         <QRScannerWidget :request-url="requestUrl" />
         
+        <!-- Ad Overlay (cubre la pantalla cuando un anuncio está reproduciéndose) -->
+        <AdOverlay :station-short-name="stationShortName" />
+        
         <div class="fullscreen-display">
         <!-- Loading State -->
         <div v-if="isLoading" class="loading-container">
@@ -85,6 +88,7 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue';
 import QRScannerWidget from './QRScannerWidget.vue';
+import AdOverlay from './AdOverlay.vue';
 import RadioPlayer from './Player.vue';
 import {ApiNowPlaying} from '~/entities/ApiInterfaces';
 

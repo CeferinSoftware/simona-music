@@ -83,6 +83,13 @@ return static function (RouteCollectorProxy $group) {
             )->setName('api:stations:streamer:art')
                 ->add(new Middleware\Cache\SetStaticFileCache());
 
+            // Current advertisement for the station
+            $group->get(
+                '/advertisement',
+                Controller\Api\Stations\AdvertisementAction::class
+            )->setName('api:stations:advertisement')
+                ->add(new Middleware\Cache\SetCache(5));
+
             $group->group(
                 '/public',
                 function (RouteCollectorProxy $group) {
