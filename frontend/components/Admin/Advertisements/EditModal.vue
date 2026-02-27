@@ -348,12 +348,13 @@ const deselectAll = () => {
 
 const loadStations = async () => {
     try {
-        const {data} = await axios.get(getApiUrl('/admin/vue/advertisements'));
+        const stationsUrl = getApiUrl('/admin/vue/advertisements');
+        const {data} = await axios.get(stationsUrl.value);
         if (data.stations) {
             allStations.value = data.stations;
         }
     } catch (e) {
-        // Silenciar - las estaciones simplemente no se mostrarán
+        console.error('Error loading stations:', e);
     }
 };
 
