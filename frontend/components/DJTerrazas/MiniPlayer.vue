@@ -15,7 +15,7 @@
                 class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center flex-shrink-0"
                 style="width:40px;height:40px"
             >
-                <icon :icon="IconMusic" class="text-white" />
+                <icon :icon="IconMusicNote" class="text-white" />
             </div>
             <div class="text-truncate flex-grow-1 me-2">
                 <div class="fw-semibold small text-truncate">
@@ -110,7 +110,7 @@ import {
     IconSkipNext,
     IconPlaylist,
     IconUpload,
-    IconMusic,
+    IconMusicNote,
 } from '~/components/Common/Icons/icons.ts';
 
 interface NowPlayingData {
