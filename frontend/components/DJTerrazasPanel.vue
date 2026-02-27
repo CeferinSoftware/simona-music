@@ -81,7 +81,7 @@ import {ref, onMounted} from 'vue';
 import {useAxios} from '~/vendor/axios';
 import {useTranslate} from '~/vendor/gettext';
 import {getApiUrl} from '~/router.ts';
-import DashboardNoSidebar from '~/components/DashboardWrapper.vue';
+import DashboardNoSidebar from '~/components/Layout/DashboardNoSidebar.vue';
 import Loading from '~/components/Common/Loading.vue';
 import Icon from '~/components/Common/Icons/Icon.vue';
 import {
