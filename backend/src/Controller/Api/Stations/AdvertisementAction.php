@@ -43,7 +43,7 @@ final class AdvertisementAction
         /** @var Station $station */
         $station = $request->getStation();
 
-        $cacheKey = self::CACHE_PREFIX . $station->getId();
+        $cacheKey = self::CACHE_PREFIX . $station->id;
 
         // Check the video ad cache first (set by AdQueueBuilder for video ads)
         $cachedAd = $this->cache->get($cacheKey);

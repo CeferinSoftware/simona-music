@@ -73,7 +73,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
         
         if (null === $ad) {
             $this->logger->debug('No playable ads found for station.', [
-                'station_id' => $station->getId(),
+                'station_id' => $station->id,
             ]);
             return;
         }
@@ -81,7 +81,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
         // Check if we've played enough songs to trigger an ad
         if ($songCounter < $ad->play_frequency) {
             $this->logger->debug('Not yet time for ad.', [
-                'station_id' => $station->getId(),
+                'station_id' => $station->id,
                 'songs_since_last_ad' => $songCounter,
                 'play_frequency' => $ad->play_frequency,
             ]);
@@ -92,7 +92,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
 
         // Time to play an ad!
         $this->logger->info('Inserting advertisement into queue.', [
-            'station_id' => $station->getId(),
+            'station_id' => $station->id,
             'ad_id' => $ad->id,
             'ad_name' => $ad->name,
             'ad_media_type' => $ad->media_type->value,
@@ -132,7 +132,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
      */
     private function setVideoAdCache(Station $station, Advertisement $ad): void
     {
-        $cacheKey = self::VIDEO_AD_CACHE_PREFIX . $station->getId();
+        $cacheKey = self::VIDEO_AD_CACHE_PREFIX . $station->id;
         $duration = max(5, (int) $ad->duration);
         
         $adData = [
@@ -151,7 +151,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
         $this->cache->set($cacheKey, $adData, $duration);
         
         $this->logger->info('Video ad cache set for frontend overlay.', [
-            'station_id' => $station->getId(),
+            'station_id' => $station->id,
             'ad_id' => $ad->id,
             'cache_ttl' => $duration,
         ]);
@@ -191,7 +191,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
      */
     private function getSongCounter(Station $station): int
     {
-        $key = self::CACHE_PREFIX . $station->getId();
+        $key = self::CACHE_PREFIX . $station->id;
         $counter = $this->cache->get($key, 0);
         return (int) $counter;
     }
@@ -201,7 +201,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
      */
     private function incrementSongCounter(Station $station): void
     {
-        $key = self::CACHE_PREFIX . $station->getId();
+        $key = self::CACHE_PREFIX . $station->id;
         $current = $this->getSongCounter($station);
         $this->cache->set($key, $current + 1, 86400); // 24h TTL
     }
@@ -211,7 +211,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
      */
     private function resetSongCounter(Station $station): void
     {
-        $key = self::CACHE_PREFIX . $station->getId();
+        $key = self::CACHE_PREFIX . $station->id;
         $this->cache->set($key, 0, 86400);
     }
 }
