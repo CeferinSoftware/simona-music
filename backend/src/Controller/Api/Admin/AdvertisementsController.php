@@ -8,6 +8,7 @@ use App\Controller\Api\AbstractApiCrudController;
 use App\Controller\Api\Traits\CanSearchResults;
 use App\Controller\Api\Traits\CanSortResults;
 use App\Entity\Advertisement;
+use Doctrine\Common\Collections\Order;
 use App\Entity\Enums\AdMediaType;
 use App\Entity\Enums\AdStatus;
 use App\Http\Response;
@@ -146,7 +147,7 @@ final class AdvertisementsController extends AbstractApiCrudController
                 'priority' => 'a.priority',
             ],
             'a.priority',
-            'DESC'
+            Order::Descending
         );
 
         $qb = $this->searchQueryBuilder(
