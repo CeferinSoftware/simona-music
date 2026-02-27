@@ -14,6 +14,7 @@ return static function (RouteCollectorProxy $app) {
             $routes = [
                 'dashboard' => '/dashboard',
                 'profile:index' => '/profile',
+                'dj:terrazas' => '/dj/terrazas',
             ];
 
             foreach ($routes as $routeName => $routePath) {
