@@ -4,9 +4,9 @@
             v-if="isAdPlaying && currentAd"
             class="ad-overlay"
         >
-            <!-- Video Ad (YouTube / Vimeo) -->
+            <!-- Video Ad (YouTube / Vimeo iframe) -->
             <div
-                v-if="currentAd.media_type === 'video' && adEmbedUrl"
+                v-if="currentAd.media_type === 'video' && isEmbeddableVideo"
                 class="ad-video-container"
             >
                 <iframe
@@ -20,9 +20,9 @@
                 />
             </div>
 
-            <!-- Audio Ad: visual overlay only (audio plays through Icecast stream) -->
+            <!-- Audio Ad or non-embeddable video: visual overlay -->
             <div
-                v-else-if="currentAd.media_type === 'audio'"
+                v-else
                 class="ad-audio-container"
             >
                 <div class="ad-audio-visual">
@@ -36,20 +36,12 @@
                             :style="{ animationDelay: `${i * 0.12}s` }"
                         />
                     </div>
-                </div>
-            </div>
-
-            <!-- Fallback: unknown media -->
-            <div v-else class="ad-audio-container">
-                <div class="ad-audio-visual">
-                    <div class="ad-pulse">
-                        <div
-                            v-for="i in 5"
-                            :key="i"
-                            class="ad-pulse-bar"
-                            :style="{ animationDelay: `${i * 0.15}s` }"
-                        />
-                    </div>
+                    <!-- Play audio from URL if available -->
+                    <audio
+                        v-if="currentAd.media_url"
+                        :src="currentAd.media_url"
+                        autoplay
+                    />
                 </div>
             </div>
 
@@ -90,7 +82,6 @@ interface AdInfo {
 
 interface AdResponse {
     is_ad_playing: boolean;
-    not_before?: number;
     ad: AdInfo | null;
 }
 
@@ -117,9 +108,6 @@ let volumeBeforeAd: number | null = null;
 let wasMutedBeforeAd = false;
 // Safety: max ad duration fallback (5 min)
 const MAX_AD_DURATION = 300;
-// Pending ad waiting for not_before to pass
-let pendingAd: { ad: AdInfo; notBefore: number } | null = null;
-let pendingAdTimer: ReturnType<typeof setTimeout> | null = null;
 
 // --- COMPUTED: embed URL for video ads ---
 const adEmbedUrl = computed(() => {
@@ -140,7 +128,12 @@ const adEmbedUrl = computed(() => {
         return `https://player.vimeo.com/video/${match[1]}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0`;
     }
 
-    return url;
+    return '';
+});
+
+// True only if the media_url is a YouTube or Vimeo link that produces a valid embed
+const isEmbeddableVideo = computed(() => {
+    return adEmbedUrl.value !== '';
 });
 
 // --- HELPERS ---
@@ -187,36 +180,11 @@ function unmuteBackgroundStream() {
     }
 }
 
-// --- SCHEDULE AD ---
-// If not_before is in the future, schedule the ad to start at that time.
-// This prevents the ad from overlapping with the current song.
-function scheduleAd(ad: AdInfo, notBefore: number) {
-    const now = Math.floor(Date.now() / 1000);
-    const delay = Math.max(0, notBefore - now);
-
-    if (delay <= 1) {
-        // Start immediately
-        startAd(ad);
-        return;
-    }
-
-    // Already waiting for the same ad
-    if (pendingAd?.ad.id === ad.id) return;
-
-    // Clear any previous pending timer
-    if (pendingAdTimer) clearTimeout(pendingAdTimer);
-
-    pendingAd = { ad, notBefore };
-    pendingAdTimer = setTimeout(() => {
-        pendingAd = null;
-        pendingAdTimer = null;
-        startAd(ad);
-    }, delay * 1000);
-}
-
 // --- AD LIFECYCLE ---
 function startAd(ad: AdInfo) {
     if (currentAd.value?.id === ad.id) return; // Already playing this ad
+
+    console.log('[AdOverlay] startAd:', ad.id, ad.name, ad.media_type, ad.media_url);
 
     currentAd.value = ad;
     isAdPlaying.value = true;
@@ -237,6 +205,7 @@ function startAd(ad: AdInfo) {
 }
 
 function endAd() {
+    console.log('[AdOverlay] endAd');
     isAdPlaying.value = false;
     currentAd.value = null;
     stopCountdown();
@@ -309,23 +278,19 @@ async function checkForAd() {
             if (data.ad.id === lastAdId && !isAdPlaying.value) {
                 return; // Same ad still in server cache, already played
             }
-            // Start the ad if not already playing this exact one
+            // Start the ad immediately if not already playing this exact one
             if (!isAdPlaying.value || currentAd.value?.id !== data.ad.id) {
-                const notBefore = data.not_before ?? 0;
-                if (notBefore > 0) {
-                    scheduleAd(data.ad, notBefore);
-                } else {
-                    startAd(data.ad);
-                }
+                console.log('[AdOverlay] Starting ad immediately:', data.ad.id, data.ad.name);
+                startAd(data.ad);
             }
         } else {
             // Server says no ad playing
             if (isAdPlaying.value) {
-                // Let video ads finish via countdown or YouTube end event
-                if (currentAd.value?.media_type === 'video' && countdown.value > 0) {
+                // Let ads finish their countdown naturally — don't cut them short
+                if (countdown.value > 0) {
                     return;
                 }
-                // Media is done, end the ad
+                // Countdown done or no countdown, end the ad
                 endAd();
             }
             // Server confirms no ad playing — clear lastAdId so the same
@@ -345,7 +310,6 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (pollInterval) clearInterval(pollInterval);
-    if (pendingAdTimer) clearTimeout(pendingAdTimer);
     stopCountdown();
     window.removeEventListener('message', onYouTubeMessage);
     // Make sure we unmute if component is destroyed while ad is playing
