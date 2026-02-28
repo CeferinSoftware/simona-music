@@ -86,11 +86,12 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 import QRScannerWidget from './QRScannerWidget.vue';
 import AdOverlay from './AdOverlay.vue';
 import RadioPlayer from './Player.vue';
 import {ApiNowPlaying} from '~/entities/ApiInterfaces';
+import {usePlayerStore} from '~/functions/usePlayerStore';
 
 interface Song {
     id: string;
@@ -114,6 +115,10 @@ const emit = defineEmits<{
 }>();
 
 const localNp = ref<ApiNowPlaying | null>(null);
+const playerStore = usePlayerStore();
+
+// Track whether we muted the Icecast stream for video playback
+let mutedForVideo = false;
 
 // Request URL for QR code
 const requestUrl = computed(() => {
@@ -149,6 +154,24 @@ const currentVideoUrl = computed(() => {
     return videoUrl.trim();
 });
 
+// When a YouTube/Vimeo video is showing, mute the Icecast stream
+// (audio comes from the video iframe). When no video, unmute.
+watch(currentVideoUrl, (hasVideo) => {
+    if (hasVideo) {
+        // Mute the Icecast stream — audio comes from YouTube/Vimeo
+        if (!playerStore.isMuted) {
+            playerStore.toggleMute();
+            mutedForVideo = true;
+        }
+    } else {
+        // No video — unmute the Icecast stream
+        if (mutedForVideo && playerStore.isMuted) {
+            playerStore.toggleMute();
+            mutedForVideo = false;
+        }
+    }
+}, { immediate: true });
+
 // Convert YouTube/Vimeo URL to embed format
 const embedUrl = computed(() => {
     if (!currentVideoUrl.value) {
@@ -166,22 +189,22 @@ const embedUrl = computed(() => {
             console.error('FullscreenDisplay: Could not extract YouTube video ID from:', url);
             return '';
         }
-        // Audio comes from the Icecast stream, YouTube is visual only (mute=1)
+        // Audio comes from the YouTube video (Icecast stream is muted via watcher)
         // Use start= to sync video position with the current song elapsed time
         const elapsed = Math.max(0, Math.floor(localNp.value?.now_playing?.elapsed ?? 0));
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}`;
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}`;
         console.log('FullscreenDisplay: YouTube embed URL:', embedUrl, 'start=', elapsed);
         return embedUrl;
     }
 
-    // Vimeo - visual only, audio from Icecast stream
+    // Vimeo - audio from the Vimeo video (Icecast stream muted via watcher)
     if (url.includes('vimeo.com')) {
         const videoId = extractVimeoId(url);
         if (!videoId) {
             console.error('FullscreenDisplay: Could not extract Vimeo video ID from:', url);
             return '';
         }
-        const embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&loop=1`;
+        const embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0&loop=1`;
         console.log('FullscreenDisplay: Vimeo embed URL:', embedUrl);
         return embedUrl;
     }
