@@ -103,8 +103,10 @@
 
 <script setup lang="ts">
 import {ref, computed, onMounted, onUnmounted} from 'vue';
+import axiosLib from 'axios';
 import {useAxios} from '~/vendor/axios';
 import {useTranslate} from '~/vendor/gettext';
+import {useAzuraCast} from '~/vendor/azuracast.ts';
 import Icon from '~/components/Common/Icons/Icon.vue';
 import {
     IconSkipNext,
@@ -145,6 +147,12 @@ const props = defineProps<{
 const {$gettext} = useTranslate();
 const {axios} = useAxios();
 
+// Silent axios instance for background polling (no global error toast)
+const {apiCsrf} = useAzuraCast();
+const quietAxios = axiosLib.create({
+    headers: {'X-API-CSRF': apiCsrf}
+});
+
 const nowPlaying = ref<NowPlayingData | null>(null);
 const playlists = ref<PlaylistItem[]>([]);
 const selectedPlaylistId = ref<string>('');
@@ -170,7 +178,7 @@ const showStatus = (msg: string, cls: string = 'text-muted', timeout: number = 3
 // --- NOW PLAYING ---
 const fetchNowPlaying = async () => {
     try {
-        const {data} = await axios.get(`/api/station/${props.stationId}/nowplaying`);
+        const {data} = await quietAxios.get(`/api/nowplaying/${props.stationId}`);
         nowPlaying.value = data;
     } catch {
         // silent
@@ -180,7 +188,7 @@ const fetchNowPlaying = async () => {
 // --- PLAYLISTS ---
 const fetchPlaylists = async () => {
     try {
-        const {data} = await axios.get(`/api/station/${props.stationId}/playlists`, {
+        const {data} = await quietAxios.get(`/api/station/${props.stationId}/playlists`, {
             params: {internal: true, rowCount: 0}
         });
         const rows = data.rows ?? data;
