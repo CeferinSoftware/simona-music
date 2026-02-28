@@ -155,29 +155,88 @@ function formatSecs(s: number): string {
     return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
+// Keep references to elements we muted so we can restore them
+let mutedAudioElements: HTMLAudioElement[] = [];
+let pausedIframes: HTMLIFrameElement[] = [];
+
 // --- MUTE / UNMUTE background stream ---
 function muteBackgroundStream() {
-    // Save current state
+    // Save current store state
     volumeBeforeAd = playerStore.volume;
     wasMutedBeforeAd = playerStore.isMuted;
-    // Mute the main stream
+    // Set store state (for AudioPlayer watcher)
     if (!playerStore.isMuted) {
         playerStore.toggleMute();
     }
+
+    // DIRECT: mute ALL existing <audio> elements in the page.
+    // The ad's own <audio> is not yet in the DOM (Vue batches DOM updates).
+    mutedAudioElements = [];
+    document.querySelectorAll('audio').forEach((el) => {
+        const audio = el as HTMLAudioElement;
+        if (!audio.muted) {
+            audio.muted = true;
+            mutedAudioElements.push(audio);
+        }
+    });
+
+    // DIRECT: pause YouTube / Vimeo iframes (videoclip mode)
+    pausedIframes = [];
+    document.querySelectorAll('iframe').forEach((iframe) => {
+        const src = iframe.src || '';
+        if (src.includes('youtube.com/embed')) {
+            iframe.contentWindow?.postMessage(
+                JSON.stringify({event: 'command', func: 'pauseVideo', args: ''}),
+                '*'
+            );
+            pausedIframes.push(iframe);
+        } else if (src.includes('player.vimeo.com')) {
+            iframe.contentWindow?.postMessage(
+                JSON.stringify({method: 'pause'}),
+                '*'
+            );
+            pausedIframes.push(iframe);
+        }
+    });
+
+    console.log('[AdOverlay] Muted', mutedAudioElements.length, 'audio elements,', pausedIframes.length, 'iframes');
 }
 
 function unmuteBackgroundStream() {
-    // Restore previous mute state
+    // Restore store state
     if (volumeBeforeAd !== null) {
         if (wasMutedBeforeAd) {
-            // Was already muted, leave it muted
             if (!playerStore.isMuted) playerStore.toggleMute();
         } else {
-            // Was not muted, unmute
             if (playerStore.isMuted) playerStore.toggleMute();
         }
         volumeBeforeAd = null;
     }
+
+    // DIRECT: unmute audio elements we muted
+    mutedAudioElements.forEach((audio) => {
+        audio.muted = false;
+    });
+    mutedAudioElements = [];
+
+    // DIRECT: resume paused iframes
+    pausedIframes.forEach((iframe) => {
+        const src = iframe.src || '';
+        if (src.includes('youtube.com/embed')) {
+            iframe.contentWindow?.postMessage(
+                JSON.stringify({event: 'command', func: 'playVideo', args: ''}),
+                '*'
+            );
+        } else if (src.includes('player.vimeo.com')) {
+            iframe.contentWindow?.postMessage(
+                JSON.stringify({method: 'play'}),
+                '*'
+            );
+        }
+    });
+    pausedIframes = [];
+
+    console.log('[AdOverlay] Unmuted background stream');
 }
 
 // --- AD LIFECYCLE ---

@@ -221,13 +221,30 @@ const togglePlaylist = async () => {
 // --- SKIP ---
 const doSkip = async () => {
     skipping.value = true;
+    // Remember current song to detect when it actually changes
+    const prevTitle = currentTitle.value;
     try {
         await axios.post(`/api/station/${props.stationId}/backend/skip`);
-        showStatus($gettext('Canción saltada'), 'text-success');
-        setTimeout(() => fetchNowPlaying(), 1500);
+        showStatus($gettext('Saltando...'), 'text-warning', 0);
+        // Poll aggressively until the song changes (max 15 attempts, 1s each)
+        let attempts = 0;
+        const pollUntilChanged = async () => {
+            attempts++;
+            await fetchNowPlaying();
+            if (currentTitle.value !== prevTitle || attempts >= 15) {
+                skipping.value = false;
+                if (currentTitle.value !== prevTitle) {
+                    showStatus($gettext('Canción saltada'), 'text-success');
+                } else {
+                    showStatus($gettext('Canción saltada (esperando cambio)'), 'text-info');
+                }
+                return;
+            }
+            setTimeout(pollUntilChanged, 1000);
+        };
+        setTimeout(pollUntilChanged, 500);
     } catch {
         showStatus($gettext('Error al saltar canción'), 'text-danger');
-    } finally {
         skipping.value = false;
     }
 };
