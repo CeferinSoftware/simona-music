@@ -179,7 +179,7 @@ watch(currentVideoUrl, (newUrl) => {
     if (newUrl.includes('youtube.com') || newUrl.includes('youtu.be')) {
         const videoId = extractYouTubeId(newUrl);
         embedUrl.value = videoId
-            ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}`
+            ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`
             : '';
     } else if (newUrl.includes('vimeo.com')) {
         const videoId = extractVimeoId(newUrl);

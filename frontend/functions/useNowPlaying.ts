@@ -160,7 +160,7 @@ export default function useNowPlaying(
                         const {data} = await axiosSilent.get<ApiNowPlaying>(nowPlayingUri.value, axiosNoCacheConfig);
                         setNowPlaying(data);
                     })(),
-                    computed(() => (!document.hidden) ? 5000 : 15000),
+                    computed(() => (!document.hidden) ? 3000 : 15000),
                     {
                         immediateCallback: true
                     }

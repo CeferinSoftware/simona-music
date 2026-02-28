@@ -39,8 +39,10 @@
                     <!-- Play audio from URL if available -->
                     <audio
                         v-if="currentAd.media_url"
+                        ref="adAudioEl"
                         :src="currentAd.media_url"
                         autoplay
+                        @ended="onAdAudioEnded"
                     />
                 </div>
             </div>
@@ -66,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, onMounted, onUnmounted} from 'vue';
+import {computed, ref, nextTick, onMounted, onUnmounted} from 'vue';
 import {useAxios} from '~/vendor/axios';
 import {usePlayerStore} from '~/functions/usePlayerStore';
 
@@ -98,6 +100,7 @@ const isAdPlaying = ref(false);
 const currentAd = ref<AdInfo | null>(null);
 const countdown = ref(0);
 const videoIframe = ref<HTMLIFrameElement | null>(null);
+const adAudioEl = ref<HTMLAudioElement | null>(null);
 
 // Track the last processed ad ID to avoid re-triggering same ad
 let lastAdId: number | null = null;
@@ -185,14 +188,15 @@ function muteBackgroundStream() {
     document.querySelectorAll('iframe').forEach((iframe) => {
         const src = iframe.src || '';
         if (src.includes('youtube.com/embed')) {
+            // Use mute (not pauseVideo) — keeps video playing but kills audio
             iframe.contentWindow?.postMessage(
-                JSON.stringify({event: 'command', func: 'pauseVideo', args: ''}),
+                JSON.stringify({event: 'command', func: 'mute', args: []}),
                 '*'
             );
             pausedIframes.push(iframe);
         } else if (src.includes('player.vimeo.com')) {
             iframe.contentWindow?.postMessage(
-                JSON.stringify({method: 'pause'}),
+                JSON.stringify({method: 'setVolume', value: 0}),
                 '*'
             );
             pausedIframes.push(iframe);
@@ -224,12 +228,12 @@ function unmuteBackgroundStream() {
         const src = iframe.src || '';
         if (src.includes('youtube.com/embed')) {
             iframe.contentWindow?.postMessage(
-                JSON.stringify({event: 'command', func: 'playVideo', args: ''}),
+                JSON.stringify({event: 'command', func: 'unMute', args: []}),
                 '*'
             );
         } else if (src.includes('player.vimeo.com')) {
             iframe.contentWindow?.postMessage(
-                JSON.stringify({method: 'play'}),
+                JSON.stringify({method: 'setVolume', value: 1}),
                 '*'
             );
         }
@@ -252,6 +256,17 @@ function startAd(ad: AdInfo) {
     // Always mute the Icecast stream — ad audio replaces the music
     muteBackgroundStream();
 
+    // Ensure the ad's own audio plays after Vue renders the <audio> element
+    nextTick(() => {
+        if (adAudioEl.value) {
+            adAudioEl.value.volume = 1.0;
+            adAudioEl.value.muted = false;
+            adAudioEl.value.play().catch((err) => {
+                console.warn('[AdOverlay] Ad audio autoplay blocked:', err);
+            });
+        }
+    });
+
     if (ad.media_type === 'video') {
         setupYouTubeListener();
     }
@@ -273,6 +288,12 @@ function endAd() {
 
     // Always unmute after ad ends
     unmuteBackgroundStream();
+}
+
+// --- AD AUDIO END DETECTION ---
+function onAdAudioEnded() {
+    console.log('[AdOverlay] Ad audio ended naturally');
+    endAd();
 }
 
 // --- YOUTUBE END DETECTION ---
