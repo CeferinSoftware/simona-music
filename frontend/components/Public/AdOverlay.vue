@@ -183,27 +183,18 @@ function muteBackgroundStream() {
         }
     });
 
-    // DIRECT: pause YouTube / Vimeo iframes (videoclip mode)
+    // KILL YouTube / Vimeo iframes by blanking their src.
+    // postMessage is unreliable — about:blank guarantees audio stops instantly.
     pausedIframes = [];
     document.querySelectorAll('iframe').forEach((iframe) => {
         const src = iframe.src || '';
-        if (src.includes('youtube.com/embed')) {
-            // Use mute (not pauseVideo) — keeps video playing but kills audio
-            iframe.contentWindow?.postMessage(
-                JSON.stringify({event: 'command', func: 'mute', args: []}),
-                '*'
-            );
-            pausedIframes.push(iframe);
-        } else if (src.includes('player.vimeo.com')) {
-            iframe.contentWindow?.postMessage(
-                JSON.stringify({method: 'setVolume', value: 0}),
-                '*'
-            );
+        if (src.includes('youtube.com/embed') || src.includes('player.vimeo.com')) {
+            iframe.src = 'about:blank';
             pausedIframes.push(iframe);
         }
     });
 
-    console.log('[AdOverlay] Muted', mutedAudioElements.length, 'audio elements,', pausedIframes.length, 'iframes');
+    console.log('[AdOverlay] Muted', mutedAudioElements.length, 'audio elements, blanked', pausedIframes.length, 'iframes');
 }
 
 function unmuteBackgroundStream() {
@@ -223,24 +214,13 @@ function unmuteBackgroundStream() {
     });
     mutedAudioElements = [];
 
-    // DIRECT: resume paused iframes
-    pausedIframes.forEach((iframe) => {
-        const src = iframe.src || '';
-        if (src.includes('youtube.com/embed')) {
-            iframe.contentWindow?.postMessage(
-                JSON.stringify({event: 'command', func: 'unMute', args: []}),
-                '*'
-            );
-        } else if (src.includes('player.vimeo.com')) {
-            iframe.contentWindow?.postMessage(
-                JSON.stringify({method: 'setVolume', value: 1}),
-                '*'
-            );
-        }
-    });
+    // Tell FullscreenDisplay to rebuild the video embed with fresh elapsed time.
+    // The iframe was blanked in muteBackgroundStream(), so we dispatch an event
+    // instead of trying to restore it directly.
     pausedIframes = [];
+    document.dispatchEvent(new CustomEvent('ad-ended'));
 
-    console.log('[AdOverlay] Unmuted background stream');
+    console.log('[AdOverlay] Unmuted background stream, dispatched ad-ended event');
 }
 
 // --- AD LIFECYCLE ---
@@ -382,16 +362,26 @@ async function checkForAd() {
     }
 }
 
+// --- VISIBILITY CHANGE (background tab handling) ---
+function onVisibilityChange() {
+    if (!document.hidden) {
+        console.log('[AdOverlay] Tab became visible, checking for ad immediately');
+        checkForAd();
+    }
+}
+
 // --- LIFECYCLE ---
 onMounted(() => {
     checkForAd();
     pollInterval = setInterval(checkForAd, 3000);
+    document.addEventListener('visibilitychange', onVisibilityChange);
 });
 
 onUnmounted(() => {
     if (pollInterval) clearInterval(pollInterval);
     stopCountdown();
     window.removeEventListener('message', onYouTubeMessage);
+    document.removeEventListener('visibilitychange', onVisibilityChange);
     // Make sure we unmute if component is destroyed while ad is playing
     if (isAdPlaying.value) {
         unmuteBackgroundStream();

@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, watch} from 'vue';
+import {computed, ref, watch, onMounted, onUnmounted} from 'vue';
 import QRScannerWidget from './QRScannerWidget.vue';
 import AdOverlay from './AdOverlay.vue';
 import RadioPlayer from './Player.vue';
@@ -158,24 +158,17 @@ const currentVideoUrl = computed(() => {
 // This prevents the iframe from reloading every 15 seconds
 const embedUrl = ref('');
 
-// When video URL changes (new song), build the embed URL and handle stream muting
-watch(currentVideoUrl, (newUrl) => {
+// Build (or rebuild) the embed URL from currentVideoUrl with fresh elapsed time
+function rebuildEmbedUrl() {
+    const newUrl = currentVideoUrl.value;
     if (!newUrl) {
         embedUrl.value = '';
-        // No video — unmute the Icecast stream
-        if (mutedForVideo && playerStore.isMuted) {
-            playerStore.toggleMute();
-            mutedForVideo = false;
-        }
         return;
     }
 
-    // Compute elapsed time from NowPlaying data for session sync.
-    // This ensures all viewers see the video at the same position.
     const playedAt = localNp.value?.now_playing?.played_at ?? 0;
     const elapsed = playedAt > 0 ? Math.max(0, Math.floor(Date.now() / 1000) - playedAt) : 0;
 
-    // Build embed URL based on provider
     if (newUrl.includes('youtube.com') || newUrl.includes('youtu.be')) {
         const videoId = extractYouTubeId(newUrl);
         embedUrl.value = videoId
@@ -195,7 +188,35 @@ watch(currentVideoUrl, (newUrl) => {
         playerStore.toggleMute();
         mutedForVideo = true;
     }
+}
+
+// When video URL changes (new song), rebuild the embed URL and handle stream muting
+watch(currentVideoUrl, (newUrl) => {
+    if (!newUrl) {
+        embedUrl.value = '';
+        // No video — unmute the Icecast stream
+        if (mutedForVideo && playerStore.isMuted) {
+            playerStore.toggleMute();
+            mutedForVideo = false;
+        }
+        return;
+    }
+    rebuildEmbedUrl();
 }, { immediate: true });
+
+// --- AD-ENDED: rebuild the video embed after an ad finishes ---
+function onAdEnded() {
+    console.log('[FullscreenDisplay] ad-ended event received, rebuilding video embed');
+    rebuildEmbedUrl();
+}
+
+onMounted(() => {
+    document.addEventListener('ad-ended', onAdEnded);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('ad-ended', onAdEnded);
+});
 
 function extractYouTubeId(url: string): string {
     // Mejorada para soportar más formatos de URLs de YouTube
