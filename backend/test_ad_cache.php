@@ -1,36 +1,22 @@
 <?php
 /**
- * Diagnostic: Test if AdQueueBuilder and AdvertisementAction share the same cache.
- * Run from inside the container: php /var/azuracast/www/backend/test_ad_cache.php
+ * Diagnostic: Test the cache used by AdQueueBuilder and AdvertisementAction.
+ * Run: docker exec simona-music-web-1 php /var/azuracast/www/backend/test_ad_cache.php
  */
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-use DI\ContainerBuilder;
-
-// Boot the DI container
-$environment = new App\Environment(dirname(__DIR__));
-$containerBuilder = new ContainerBuilder();
-$containerBuilder->addDefinitions(dirname(__DIR__) . '/backend/config/services.php');
-
-// We need a simpler approach - just get the cache interface directly
-// Use the same Redis factory as the app
-$redisFactory = new App\Service\RedisFactory();
-
-if (!$redisFactory->isSupported()) {
-    echo "ERROR: Redis not supported\n";
-    exit(1);
-}
-
-$redis = $redisFactory->getInstance();
+// Connect to Redis directly (same as the app)
+$redis = new Redis();
+$redis->connect('redis', 6379);
 echo "Redis connected OK\n";
 
-// Create the same cache stack as services.php
+// Create the same cache stack as services.php (production mode)
 $marshaller = new Symfony\Component\Cache\Marshaller\DefaultMarshaller(null);
 $cacheAdapter = new Symfony\Component\Cache\Adapter\RedisAdapter($redis, marshaller: $marshaller);
 $psr16Cache = new Symfony\Component\Cache\Psr16Cache($cacheAdapter);
 
-echo "Marshaller class: " . get_class($marshaller) . "\n";
+echo "Marshaller uses igbinary: " . (extension_loaded('igbinary') ? 'YES' : 'NO') . "\n";
 
 // Test 1: Integer value (like song counter) - this works
 $psr16Cache->set('test_int_key', 42, 60);
