@@ -90,6 +90,7 @@ interface AdInfo {
 
 interface AdResponse {
     is_ad_playing: boolean;
+    not_before?: number;
     ad: AdInfo | null;
 }
 
@@ -116,6 +117,9 @@ let volumeBeforeAd: number | null = null;
 let wasMutedBeforeAd = false;
 // Safety: max ad duration fallback (5 min)
 const MAX_AD_DURATION = 300;
+// Pending ad waiting for not_before to pass
+let pendingAd: { ad: AdInfo; notBefore: number } | null = null;
+let pendingAdTimer: ReturnType<typeof setTimeout> | null = null;
 
 // --- COMPUTED: embed URL for video ads ---
 const adEmbedUrl = computed(() => {
@@ -183,6 +187,33 @@ function unmuteBackgroundStream() {
     }
 }
 
+// --- SCHEDULE AD ---
+// If not_before is in the future, schedule the ad to start at that time.
+// This prevents the ad from overlapping with the current song.
+function scheduleAd(ad: AdInfo, notBefore: number) {
+    const now = Math.floor(Date.now() / 1000);
+    const delay = Math.max(0, notBefore - now);
+
+    if (delay <= 1) {
+        // Start immediately
+        startAd(ad);
+        return;
+    }
+
+    // Already waiting for the same ad
+    if (pendingAd?.ad.id === ad.id) return;
+
+    // Clear any previous pending timer
+    if (pendingAdTimer) clearTimeout(pendingAdTimer);
+
+    pendingAd = { ad, notBefore };
+    pendingAdTimer = setTimeout(() => {
+        pendingAd = null;
+        pendingAdTimer = null;
+        startAd(ad);
+    }, delay * 1000);
+}
+
 // --- AD LIFECYCLE ---
 function startAd(ad: AdInfo) {
     if (currentAd.value?.id === ad.id) return; // Already playing this ad
@@ -191,9 +222,10 @@ function startAd(ad: AdInfo) {
     isAdPlaying.value = true;
     lastAdId = ad.id;
 
-    // Only mute for VIDEO ads (audio ads play through the Icecast stream naturally)
+    // Always mute the Icecast stream — ad audio replaces the music
+    muteBackgroundStream();
+
     if (ad.media_type === 'video') {
-        muteBackgroundStream();
         setupYouTubeListener();
     }
 
@@ -205,18 +237,14 @@ function startAd(ad: AdInfo) {
 }
 
 function endAd() {
-    const wasVideoAd = currentAd.value?.media_type === 'video';
-
     isAdPlaying.value = false;
     currentAd.value = null;
     stopCountdown();
 
     window.removeEventListener('message', onYouTubeMessage);
 
-    // Only unmute for video ads (audio ads never muted the stream)
-    if (wasVideoAd) {
-        unmuteBackgroundStream();
-    }
+    // Always unmute after ad ends
+    unmuteBackgroundStream();
 }
 
 // --- YOUTUBE END DETECTION ---
@@ -283,7 +311,12 @@ async function checkForAd() {
             }
             // Start the ad if not already playing this exact one
             if (!isAdPlaying.value || currentAd.value?.id !== data.ad.id) {
-                startAd(data.ad);
+                const notBefore = data.not_before ?? 0;
+                if (notBefore > 0) {
+                    scheduleAd(data.ad, notBefore);
+                } else {
+                    startAd(data.ad);
+                }
             }
         } else {
             // Server says no ad playing
@@ -312,6 +345,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (pollInterval) clearInterval(pollInterval);
+    if (pendingAdTimer) clearTimeout(pendingAdTimer);
     stopCountdown();
     window.removeEventListener('message', onYouTubeMessage);
     // Make sure we unmute if component is destroyed while ad is playing
