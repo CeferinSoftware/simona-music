@@ -39,14 +39,7 @@ final class AdvertisementAction
         // Check the ad cache (set by AdQueueBuilder for both video and audio ads)
         $cachedAd = $this->cache->get($cacheKey);
         if ($cachedAd !== null && is_array($cachedAd) && ($cachedAd['is_ad_playing'] ?? false)) {
-            // Don't report ad as playing before the current song ends
-            $notBefore = $cachedAd['not_before'] ?? 0;
-            if ($notBefore > 0 && time() < $notBefore) {
-                return $response->withJson([
-                    'is_ad_playing' => false,
-                    'ad' => null,
-                ]);
-            }
+            // Return the ad immediately — the frontend overlay handles timing
             return $response->withJson($cachedAd);
         }
 

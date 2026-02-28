@@ -170,19 +170,21 @@ watch(currentVideoUrl, (newUrl) => {
         return;
     }
 
-    // Always start from 0 — the video provides its own audio,
-    // no need to sync with the Icecast stream position
+    // Compute elapsed time from NowPlaying data for session sync.
+    // This ensures all viewers see the video at the same position.
+    const playedAt = localNp.value?.now_playing?.played_at ?? 0;
+    const elapsed = playedAt > 0 ? Math.max(0, Math.floor(Date.now() / 1000) - playedAt) : 0;
 
     // Build embed URL based on provider
     if (newUrl.includes('youtube.com') || newUrl.includes('youtu.be')) {
         const videoId = extractYouTubeId(newUrl);
         embedUrl.value = videoId
-            ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}`
+            ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}`
             : '';
     } else if (newUrl.includes('vimeo.com')) {
         const videoId = extractVimeoId(newUrl);
         embedUrl.value = videoId
-            ? `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0&loop=1`
+            ? `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0&loop=1#t=${elapsed}s`
             : '';
     } else {
         embedUrl.value = newUrl;
