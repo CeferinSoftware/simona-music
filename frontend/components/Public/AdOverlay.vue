@@ -119,7 +119,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const {axios} = useAxios();
+const {axiosSilent} = useAxios();
 const playerStore = usePlayerStore();
 
 const isAdPlaying = ref(false);
@@ -252,6 +252,9 @@ function endAd() {
     currentAd.value = null;
     stopCountdown();
 
+    // Remove YouTube listener to prevent stale callbacks
+    window.removeEventListener('message', onYouTubeMessage);
+
     // Unmute the background stream
     unmuteBackgroundStream();
 }
@@ -339,28 +342,41 @@ async function checkForAd() {
     if (!props.stationShortName) return;
 
     try {
-        const {data} = await axios.get<AdResponse>(
+        const {data} = await axiosSilent.get<AdResponse>(
             `/api/station/${props.stationShortName}/advertisement`
         );
 
         if (data.is_ad_playing && data.ad) {
-            // New ad or same ad still playing
+            // Prevent replaying the same ad we just finished.
+            // Server cache may still be active after the ad ended on the frontend.
+            if (data.ad.id === lastAdId && !isAdPlaying.value) {
+                return; // Same ad still in server cache, already played
+            }
+            // Start the ad if not already playing this exact one
             if (!isAdPlaying.value || currentAd.value?.id !== data.ad.id) {
                 startAd(data.ad);
             }
         } else {
             // Server says no ad playing
             if (isAdPlaying.value) {
-                // But if we're still playing audio/video, let it finish naturally
-                // Only force-end if the media has already ended
+                // Let audio ads finish naturally via their ended event
                 const audioStillPlaying = audioEl.value && !audioEl.value.paused && !audioEl.value.ended;
-                if (!audioStillPlaying) {
-                    endAd();
+                if (audioStillPlaying) {
+                    return;
                 }
+                // Let video ads finish via countdown or YouTube end event
+                if (currentAd.value?.media_type === 'video' && countdown.value > 0) {
+                    return;
+                }
+                // Media is done, end the ad
+                endAd();
             }
+            // Server confirms no ad playing — clear lastAdId so the same
+            // ad can play again in a future cycle
+            lastAdId = null;
         }
     } catch {
-        // Silently fail
+        // Silently fail - don't interrupt playback on network errors
     }
 }
 

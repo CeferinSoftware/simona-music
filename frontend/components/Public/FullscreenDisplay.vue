@@ -166,19 +166,22 @@ const embedUrl = computed(() => {
             console.error('FullscreenDisplay: Could not extract YouTube video ID from:', url);
             return '';
         }
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}`;
-        console.log('FullscreenDisplay: YouTube embed URL:', embedUrl);
+        // Audio comes from the Icecast stream, YouTube is visual only (mute=1)
+        // Use start= to sync video position with the current song elapsed time
+        const elapsed = Math.max(0, Math.floor(localNp.value?.now_playing?.elapsed ?? 0));
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}`;
+        console.log('FullscreenDisplay: YouTube embed URL:', embedUrl, 'start=', elapsed);
         return embedUrl;
     }
 
-    // Vimeo
+    // Vimeo - visual only, audio from Icecast stream
     if (url.includes('vimeo.com')) {
         const videoId = extractVimeoId(url);
         if (!videoId) {
             console.error('FullscreenDisplay: Could not extract Vimeo video ID from:', url);
             return '';
         }
-        const embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=1&title=0&byline=0&portrait=0&loop=1`;
+        const embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&loop=1`;
         console.log('FullscreenDisplay: Vimeo embed URL:', embedUrl);
         return embedUrl;
     }
