@@ -4,12 +4,13 @@
             v-if="isAdPlaying && currentAd"
             class="ad-overlay"
         >
-            <!-- Video Ad -->
+            <!-- Video Ad (YouTube / Vimeo) -->
             <div
                 v-if="currentAd.media_type === 'video' && adEmbedUrl"
                 class="ad-video-container"
             >
                 <iframe
+                    ref="videoIframe"
                     :key="adEmbedUrl"
                     :src="adEmbedUrl"
                     frameborder="0"
@@ -19,11 +20,47 @@
                 />
             </div>
 
-            <!-- Audio Ad (show visual) -->
+            <!-- Audio Ad: real <audio> player + visual animation -->
             <div
-                v-else
+                v-else-if="currentAd.media_type === 'audio' && audioSrc"
                 class="ad-audio-container"
             >
+                <audio
+                    ref="audioEl"
+                    :src="audioSrc"
+                    autoplay
+                    @ended="onAdMediaEnded"
+                    @timeupdate="onAudioTimeUpdate"
+                    @loadedmetadata="onAudioLoaded"
+                    @error="onAdMediaError"
+                />
+                <div class="ad-audio-visual">
+                    <div class="ad-audio-icon">&#127925;</div>
+                    <div class="ad-audio-title">{{ currentAd.name }}</div>
+                    <div class="ad-pulse">
+                        <div
+                            v-for="i in 7"
+                            :key="i"
+                            class="ad-pulse-bar"
+                            :style="{ animationDelay: `${i * 0.12}s` }"
+                        />
+                    </div>
+                    <div v-if="audioDuration > 0" class="ad-audio-progress">
+                        <div class="ad-progress-bar">
+                            <div
+                                class="ad-progress-fill"
+                                :style="{ width: audioProgressPct + '%' }"
+                            />
+                        </div>
+                        <div class="ad-progress-time">
+                            {{ formatSecs(audioCurrentTime) }} / {{ formatSecs(audioDuration) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fallback: unknown media -->
+            <div v-else class="ad-audio-container">
                 <div class="ad-audio-visual">
                     <div class="ad-pulse">
                         <div
@@ -57,8 +94,9 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, watch, onMounted, onUnmounted} from 'vue';
+import {computed, ref, onMounted, onUnmounted, nextTick, watch} from 'vue';
 import {useAxios} from '~/vendor/axios';
+import {usePlayerStore} from '~/functions/usePlayerStore';
 
 interface AdInfo {
     id: number;
@@ -82,35 +120,57 @@ interface Props {
 const props = defineProps<Props>();
 
 const {axios} = useAxios();
+const playerStore = usePlayerStore();
+
 const isAdPlaying = ref(false);
 const currentAd = ref<AdInfo | null>(null);
 const countdown = ref(0);
+const audioEl = ref<HTMLAudioElement | null>(null);
+const videoIframe = ref<HTMLIFrameElement | null>(null);
+const audioDuration = ref(0);
+const audioCurrentTime = ref(0);
+const audioProgressPct = ref(0);
 
+// Track the last processed ad ID to avoid re-triggering same ad
+let lastAdId: number | null = null;
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
+// Remember volume before muting for ad
+let volumeBeforeAd: number | null = null;
+let wasMutedBeforeAd = false;
+// Safety: max ad duration fallback (5 min)
+const MAX_AD_DURATION = 300;
 
+// --- COMPUTED: embed URL for video ads ---
 const adEmbedUrl = computed(() => {
     if (!currentAd.value?.media_url) return '';
-    
     const url = currentAd.value.media_url;
-    
-    // YouTube
+
+    // YouTube with JS API enabled + autoplay
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
         const videoId = extractYouTubeId(url);
         if (!videoId) return '';
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1`;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
     }
-    
+
     // Vimeo
     if (url.includes('vimeo.com')) {
         const match = url.match(/vimeo\.com\/(\d+)/);
         if (!match) return '';
         return `https://player.vimeo.com/video/${match[1]}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0`;
     }
-    
+
     return url;
 });
 
+// --- COMPUTED: audio src for audio ads ---
+const audioSrc = computed(() => {
+    if (!currentAd.value) return '';
+    // Prefer media_url, fallback to media_path
+    return currentAd.value.media_url || currentAd.value.media_path || '';
+});
+
+// --- HELPERS ---
 function extractYouTubeId(url: string): string {
     const patterns = [
         /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
@@ -123,43 +183,146 @@ function extractYouTubeId(url: string): string {
     return '';
 }
 
-async function checkForAd() {
-    if (!props.stationShortName) return;
-    
-    try {
-        const {data} = await axios.get<AdResponse>(
-            `/api/station/${props.stationShortName}/advertisement`
-        );
-        
-        if (data.is_ad_playing && data.ad) {
-            // New ad started
-            if (!isAdPlaying.value || currentAd.value?.id !== data.ad.id) {
-                currentAd.value = data.ad;
-                isAdPlaying.value = true;
-                startCountdown(data.ad.duration);
-            }
-        } else {
-            isAdPlaying.value = false;
-            currentAd.value = null;
-            stopCountdown();
-        }
-    } catch {
-        // Silently fail — don't disrupt the player
+function formatSecs(s: number): string {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+// --- MUTE / UNMUTE background stream ---
+function muteBackgroundStream() {
+    // Save current state
+    volumeBeforeAd = playerStore.volume;
+    wasMutedBeforeAd = playerStore.isMuted;
+    // Mute the main stream
+    if (!playerStore.isMuted) {
+        playerStore.toggleMute();
     }
 }
 
+function unmuteBackgroundStream() {
+    // Restore previous mute state
+    if (volumeBeforeAd !== null) {
+        if (wasMutedBeforeAd) {
+            // Was already muted, leave it muted
+            if (!playerStore.isMuted) playerStore.toggleMute();
+        } else {
+            // Was not muted, unmute
+            if (playerStore.isMuted) playerStore.toggleMute();
+        }
+        volumeBeforeAd = null;
+    }
+}
+
+// --- AD LIFECYCLE ---
+function startAd(ad: AdInfo) {
+    if (currentAd.value?.id === ad.id) return; // Already playing this ad
+
+    currentAd.value = ad;
+    isAdPlaying.value = true;
+    lastAdId = ad.id;
+    audioDuration.value = 0;
+    audioCurrentTime.value = 0;
+    audioProgressPct.value = 0;
+
+    // Mute the background music stream
+    muteBackgroundStream();
+
+    // Start a fallback countdown (in case media events don't fire)
+    const fallbackDuration = ad.duration > 0 ? Math.min(ad.duration, MAX_AD_DURATION) : 60;
+    startCountdown(fallbackDuration);
+
+    // For audio ads, the <audio> element will autoplay via the template
+    // For video ads, YouTube iframe autoplays; we listen for its end via postMessage
+    if (ad.media_type === 'video') {
+        setupYouTubeListener();
+    }
+}
+
+function endAd() {
+    // Stop audio if playing
+    if (audioEl.value) {
+        try {
+            audioEl.value.pause();
+            audioEl.value.src = '';
+        } catch { /* ignore */ }
+    }
+
+    isAdPlaying.value = false;
+    currentAd.value = null;
+    stopCountdown();
+
+    // Unmute the background stream
+    unmuteBackgroundStream();
+}
+
+// --- AUDIO AD EVENTS ---
+function onAudioLoaded() {
+    if (audioEl.value) {
+        audioDuration.value = audioEl.value.duration || 0;
+        // Update countdown to actual duration
+        if (audioDuration.value > 0) {
+            stopCountdown();
+            startCountdown(Math.ceil(audioDuration.value));
+        }
+    }
+}
+
+function onAudioTimeUpdate() {
+    if (audioEl.value) {
+        audioCurrentTime.value = audioEl.value.currentTime || 0;
+        if (audioDuration.value > 0) {
+            audioProgressPct.value = (audioCurrentTime.value / audioDuration.value) * 100;
+            countdown.value = Math.max(0, Math.ceil(audioDuration.value - audioCurrentTime.value));
+        }
+    }
+}
+
+function onAdMediaEnded() {
+    endAd();
+}
+
+function onAdMediaError() {
+    // If audio fails to load, end the ad after a short delay
+    setTimeout(() => endAd(), 2000);
+}
+
+// --- YOUTUBE END DETECTION ---
+function setupYouTubeListener() {
+    // Listen for YouTube postMessage events to detect video end
+    window.addEventListener('message', onYouTubeMessage);
+}
+
+function onYouTubeMessage(event: MessageEvent) {
+    // YouTube sends state changes via postMessage
+    try {
+        let data = event.data;
+        if (typeof data === 'string') {
+            data = JSON.parse(data);
+        }
+        // YouTube IFrame API: playerState 0 = ended
+        if (data?.event === 'onStateChange' && data?.info === 0) {
+            endAd();
+        }
+        // Also check the info object format
+        if (data?.info?.playerState === 0) {
+            endAd();
+        }
+    } catch {
+        // Not a YouTube message, ignore
+    }
+}
+
+// --- COUNTDOWN (fallback timer) ---
 function startCountdown(duration: number) {
     stopCountdown();
-    // Enforce minimum 15 seconds for the ad overlay
-    const effectiveDuration = duration > 0 ? duration : 30;
-    countdown.value = Math.ceil(effectiveDuration);
-    
+    countdown.value = Math.ceil(duration);
+
     countdownInterval = setInterval(() => {
         countdown.value--;
         if (countdown.value <= 0) {
-            stopCountdown();
-            isAdPlaying.value = false;
-            currentAd.value = null;
+            // Fallback: if media hasn't ended naturally, force end
+            endAd();
         }
     }, 1000);
 }
@@ -171,17 +334,50 @@ function stopCountdown() {
     }
 }
 
+// --- POLLING ---
+async function checkForAd() {
+    if (!props.stationShortName) return;
+
+    try {
+        const {data} = await axios.get<AdResponse>(
+            `/api/station/${props.stationShortName}/advertisement`
+        );
+
+        if (data.is_ad_playing && data.ad) {
+            // New ad or same ad still playing
+            if (!isAdPlaying.value || currentAd.value?.id !== data.ad.id) {
+                startAd(data.ad);
+            }
+        } else {
+            // Server says no ad playing
+            if (isAdPlaying.value) {
+                // But if we're still playing audio/video, let it finish naturally
+                // Only force-end if the media has already ended
+                const audioStillPlaying = audioEl.value && !audioEl.value.paused && !audioEl.value.ended;
+                if (!audioStillPlaying) {
+                    endAd();
+                }
+            }
+        }
+    } catch {
+        // Silently fail
+    }
+}
+
+// --- LIFECYCLE ---
 onMounted(() => {
-    // Poll every 3 seconds for ad state (needs to be fast enough to catch ads)
     checkForAd();
     pollInterval = setInterval(checkForAd, 3000);
 });
 
 onUnmounted(() => {
-    if (pollInterval) {
-        clearInterval(pollInterval);
-    }
+    if (pollInterval) clearInterval(pollInterval);
     stopCountdown();
+    window.removeEventListener('message', onYouTubeMessage);
+    // Make sure we unmute if component is destroyed while ad is playing
+    if (isAdPlaying.value) {
+        unmuteBackgroundStream();
+    }
 });
 </script>
 
@@ -221,27 +417,69 @@ onUnmounted(() => {
 
 .ad-audio-visual {
     text-align: center;
+    max-width: 500px;
+    padding: 40px;
+}
+
+.ad-audio-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.ad-audio-title {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 30px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .ad-pulse {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    height: 120px;
+    gap: 6px;
+    height: 100px;
+    margin-bottom: 30px;
 }
 
 .ad-pulse-bar {
-    width: 12px;
-    height: 40px;
+    width: 10px;
+    height: 30px;
     background: linear-gradient(180deg, #e94560 0%, #533483 100%);
-    border-radius: 6px;
+    border-radius: 5px;
     animation: adPulse 1.2s ease-in-out infinite;
 }
 
 @keyframes adPulse {
-    0%, 100% { height: 40px; }
-    50% { height: 100px; }
+    0%, 100% { height: 30px; }
+    50% { height: 80px; }
+}
+
+.ad-audio-progress {
+    width: 100%;
+}
+
+.ad-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.ad-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e94560, #533483);
+    border-radius: 3px;
+    transition: width 0.3s linear;
+}
+
+.ad-progress-time {
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
 }
 
 .ad-badge {

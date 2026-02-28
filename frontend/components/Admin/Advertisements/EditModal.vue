@@ -61,8 +61,9 @@
                 class="col-md-6"
                 :field="r$.duration"
                 input-type="number"
-                :input-attrs="{step: '0.1', min: '0'}"
+                :input-attrs="{step: '1', min: '0'}"
                 :label="$gettext('Duración (segundos)')"
+                :description="$gettext('Dejar en 0 = el anuncio se reproduce completo automáticamente.')"
             />
 
             <form-group-field
@@ -81,6 +82,7 @@
                 input-type="number"
                 :input-attrs="{min: '1'}"
                 :label="$gettext('Frecuencia (cada X canciones)')"
+                :description="$gettext('Número de canciones entre cada anuncio. Ej: 3 = cada 3 canciones sale un anuncio.')"
             />
 
             <form-group-field

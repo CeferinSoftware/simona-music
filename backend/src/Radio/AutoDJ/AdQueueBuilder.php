@@ -19,13 +19,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Inserts advertisements into the AutoDJ queue based on play_frequency.
  * 
- * This subscriber runs at priority 3 (between requests at 5 and normal songs at 0).
- * It tracks how many songs have played since the last ad for each station using Redis cache.
- * When the counter reaches an ad's play_frequency, it injects the ad into the queue.
- * 
- * Audio ads: Injected directly into the Liquidsoap queue (replaces the next song).
- * Video ads: A cache flag is set so the frontend overlay knows to display the video.
- *            The normal song continues playing in the audio stream.
+ * Flow: Canción A → Anuncio → Canción B → (play_frequency more songs) → Anuncio → ...
+ *
+ * Audio ads: Injected directly into the Liquidsoap queue as the next "song".
+ *            The ad plays fully, then the normal AutoDJ resumes.
+ * Video ads: A cache flag is set so the frontend overlay displays the video
+ *            while the audio stream is muted by the frontend.
+ *            A cooldown prevents another ad from triggering while one is active.
  */
 final class AdQueueBuilder implements EventSubscriberInterface
 {
@@ -34,6 +34,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
 
     private const string CACHE_PREFIX = 'ad_song_counter_';
     private const string VIDEO_AD_CACHE_PREFIX = 'station_current_ad_';
+    private const string AD_COOLDOWN_PREFIX = 'ad_cooldown_';
 
     public function __construct(
         private readonly AdvertisementRepository $adRepo,
@@ -64,9 +65,14 @@ final class AdQueueBuilder implements EventSubscriberInterface
         }
 
         $station = $event->getStation();
-        
-        // Get the song counter for this station
-        $songCounter = $this->getSongCounter($station);
+
+        // If an ad is currently in cooldown (recently played), skip entirely.
+        if ($this->isOnCooldown($station)) {
+            $this->logger->debug('Ad on cooldown, skipping.', [
+                'station_id' => $station->id,
+            ]);
+            return;
+        }
         
         // Get the best ad to play for this station
         $ad = $this->adRepo->getBestAdForStation($station);
@@ -78,7 +84,11 @@ final class AdQueueBuilder implements EventSubscriberInterface
             return;
         }
 
-        // Check if we've played enough songs to trigger an ad
+        // Get the song counter for this station
+        $songCounter = $this->getSongCounter($station);
+
+        // Check if we've played enough songs to trigger an ad.
+        // play_frequency = N means: play an ad after every N songs.
         if ($songCounter < $ad->play_frequency) {
             $this->logger->debug('Not yet time for ad.', [
                 'station_id' => $station->id,
@@ -99,46 +109,48 @@ final class AdQueueBuilder implements EventSubscriberInterface
             'songs_since_last_ad' => $songCounter,
         ]);
 
-        if ($ad->media_type === AdMediaType::Video) {
-            // Video ads: Set cache flag for frontend overlay, don't interrupt audio stream
-            $this->setVideoAdCache($station, $ad);
-            
-            // Reset the song counter
-            $this->resetSongCounter($station);
-            
-            // Record the ad play
-            $this->adRepo->recordAdPlay($ad);
-            
-            // Don't stop propagation — let normal song play while video overlays
-            return;
+        // Calculate effective duration for cooldown
+        $effectiveDuration = (int) $ad->duration;
+        if ($effectiveDuration <= 0) {
+            // Default durations when not set
+            $effectiveDuration = ($ad->media_type === AdMediaType::Video) ? 60 : 30;
         }
 
-        // Audio ads: Inject into Liquidsoap queue
-        $queueRow = $this->createQueueFromAd($station, $ad);
-        
-        if (null !== $queueRow) {
+        if ($ad->media_type === AdMediaType::Video) {
+            // Video ads: Set cache flag for frontend overlay
+            $this->setVideoAdCache($station, $ad, $effectiveDuration);
+        } else {
+            // Audio ads: Inject into Liquidsoap queue
+            $queueRow = $this->createQueueFromAd($station, $ad, $effectiveDuration);
+            
+            if (null === $queueRow) {
+                return; // No media available
+            }
+
+            // Set the audio ad info in cache too, so frontend can display overlay
+            $this->setAudioAdCache($station, $ad, $effectiveDuration);
+
             $event->setNextSongs($queueRow);
-            
-            // Reset the song counter
-            $this->resetSongCounter($station);
-            
-            // Record the ad play (increment play_count)
-            $this->adRepo->recordAdPlay($ad);
         }
+        
+        // Reset the song counter
+        $this->resetSongCounter($station);
+        
+        // Set cooldown to prevent another ad from firing while this one plays.
+        // Cooldown = ad duration + small buffer
+        $this->setCooldown($station, $effectiveDuration + 15);
+        
+        // Record the ad play (increment play_count)
+        $this->adRepo->recordAdPlay($ad);
     }
 
     /**
      * Set a cache flag for the frontend to detect a video ad is playing.
      */
-    private function setVideoAdCache(Station $station, Advertisement $ad): void
+    private function setVideoAdCache(Station $station, Advertisement $ad, int $effectiveDuration): void
     {
         $cacheKey = self::VIDEO_AD_CACHE_PREFIX . $station->id;
-        // Minimum 30 seconds for video ads (YouTube videos need time to load and play)
-        $effectiveDuration = (int) $ad->duration;
-        if ($effectiveDuration <= 0) {
-            $effectiveDuration = 30; // Default 30 seconds for video ads with no duration set
-        }
-        $cacheTtl = $effectiveDuration + 10; // Cache lives a bit longer than the ad
+        $cacheTtl = $effectiveDuration + 30; // Cache lives longer than the ad
         
         $adData = [
             'is_ad_playing' => true,
@@ -164,22 +176,52 @@ final class AdQueueBuilder implements EventSubscriberInterface
     }
 
     /**
+     * Set a cache flag for the frontend to detect an audio ad is playing.
+     */
+    private function setAudioAdCache(Station $station, Advertisement $ad, int $effectiveDuration): void
+    {
+        $cacheKey = self::VIDEO_AD_CACHE_PREFIX . $station->id; // Same key, same endpoint
+        $cacheTtl = $effectiveDuration + 30;
+        
+        $adData = [
+            'is_ad_playing' => true,
+            'ad' => [
+                'id' => $ad->id,
+                'name' => $ad->name,
+                'advertiser_name' => $ad->advertiser_name,
+                'media_type' => $ad->media_type->value,
+                'media_url' => $ad->media_url,
+                'media_path' => $ad->media_path,
+                'duration' => $effectiveDuration,
+            ],
+        ];
+        
+        $this->cache->set($cacheKey, $adData, $cacheTtl);
+        
+        $this->logger->info('Audio ad cache set for frontend overlay.', [
+            'station_id' => $station->id,
+            'ad_id' => $ad->id,
+            'effective_duration' => $effectiveDuration,
+        ]);
+    }
+
+    /**
      * Create a StationQueue entry from an Advertisement (audio ads only).
      */
-    private function createQueueFromAd(Station $station, Advertisement $ad): ?StationQueue
+    private function createQueueFromAd(Station $station, Advertisement $ad, int $effectiveDuration): ?StationQueue
     {
         // Create a Song entity for the ad
         $song = Song::createFromText('AD: ' . $ad->name);
         
         $sq = new StationQueue($station, $song);
-        $sq->duration = $ad->duration > 0 ? $ad->duration : 30.0;
+        $sq->duration = (float) $effectiveDuration;
         $sq->is_visible = false; // Don't show ads in "Playing Next"
         
         // Set the custom URI based on media type
-        if (!empty($ad->media_path)) {
-            $sq->autodj_custom_uri = $ad->media_path;
-        } elseif (!empty($ad->media_url)) {
+        if (!empty($ad->media_url)) {
             $sq->autodj_custom_uri = $ad->media_url;
+        } elseif (!empty($ad->media_path)) {
+            $sq->autodj_custom_uri = $ad->media_path;
         } else {
             // No media available for this ad
             $this->logger->warning('Audio ad has no media path or URL.', [
@@ -190,6 +232,24 @@ final class AdQueueBuilder implements EventSubscriberInterface
         }
         
         return $sq;
+    }
+
+    /**
+     * Check if the station is in ad cooldown (an ad was recently played/scheduled).
+     */
+    private function isOnCooldown(Station $station): bool
+    {
+        $key = self::AD_COOLDOWN_PREFIX . $station->id;
+        return (bool) $this->cache->get($key, false);
+    }
+
+    /**
+     * Set a cooldown period after playing an ad.
+     */
+    private function setCooldown(Station $station, int $seconds): void
+    {
+        $key = self::AD_COOLDOWN_PREFIX . $station->id;
+        $this->cache->set($key, true, $seconds);
     }
 
     /**
