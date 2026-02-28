@@ -12,6 +12,7 @@ use App\Entity\Repository\AdvertisementRepository;
 use App\Entity\Song;
 use App\Entity\Station;
 use App\Entity\StationQueue;
+use App\Cache\NowPlayingCache;
 use App\Event\Radio\BuildQueue;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -39,6 +40,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
     public function __construct(
         private readonly AdvertisementRepository $adRepo,
         private readonly CacheInterface $cache,
+        private readonly NowPlayingCache $nowPlayingCache,
     ) {
     }
 
@@ -116,9 +118,12 @@ final class AdQueueBuilder implements EventSubscriberInterface
             $effectiveDuration = ($ad->media_type === AdMediaType::Video) ? 60 : 30;
         }
 
+        // Calculate when the current song will end — don't show ad before this
+        $notBefore = $this->getNotBeforeTimestamp($station);
+
         if ($ad->media_type === AdMediaType::Video) {
             // Video ads: Set cache flag for frontend overlay
-            $this->setVideoAdCache($station, $ad, $effectiveDuration);
+            $this->setVideoAdCache($station, $ad, $effectiveDuration, $notBefore);
         } else {
             // Audio ads: Inject into Liquidsoap queue
             $queueRow = $this->createQueueFromAd($station, $ad, $effectiveDuration);
@@ -128,7 +133,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
             }
 
             // Set the audio ad info in cache too, so frontend can display overlay
-            $this->setAudioAdCache($station, $ad, $effectiveDuration);
+            $this->setAudioAdCache($station, $ad, $effectiveDuration, $notBefore);
 
             $event->setNextSongs($queueRow);
         }
@@ -147,13 +152,16 @@ final class AdQueueBuilder implements EventSubscriberInterface
     /**
      * Set a cache flag for the frontend to detect a video ad is playing.
      */
-    private function setVideoAdCache(Station $station, Advertisement $ad, int $effectiveDuration): void
+    private function setVideoAdCache(Station $station, Advertisement $ad, int $effectiveDuration, int $notBefore): void
     {
         $cacheKey = self::VIDEO_AD_CACHE_PREFIX . $station->id;
-        $cacheTtl = $effectiveDuration + 30; // Cache lives longer than the ad
+        // Cache TTL must cover: time until song ends + ad duration + buffer
+        $timeUntilSongEnds = max(0, $notBefore - time());
+        $cacheTtl = $timeUntilSongEnds + $effectiveDuration + 30;
         
         $adData = [
             'is_ad_playing' => true,
+            'not_before' => $notBefore,
             'ad' => [
                 'id' => $ad->id,
                 'name' => $ad->name,
@@ -171,6 +179,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
             'station_id' => $station->id,
             'ad_id' => $ad->id,
             'effective_duration' => $effectiveDuration,
+            'not_before' => $notBefore,
             'cache_ttl' => $cacheTtl,
         ]);
     }
@@ -178,13 +187,15 @@ final class AdQueueBuilder implements EventSubscriberInterface
     /**
      * Set a cache flag for the frontend to detect an audio ad is playing.
      */
-    private function setAudioAdCache(Station $station, Advertisement $ad, int $effectiveDuration): void
+    private function setAudioAdCache(Station $station, Advertisement $ad, int $effectiveDuration, int $notBefore): void
     {
         $cacheKey = self::VIDEO_AD_CACHE_PREFIX . $station->id; // Same key, same endpoint
-        $cacheTtl = $effectiveDuration + 30;
+        $timeUntilSongEnds = max(0, $notBefore - time());
+        $cacheTtl = $timeUntilSongEnds + $effectiveDuration + 30;
         
         $adData = [
             'is_ad_playing' => true,
+            'not_before' => $notBefore,
             'ad' => [
                 'id' => $ad->id,
                 'name' => $ad->name,
@@ -202,6 +213,7 @@ final class AdQueueBuilder implements EventSubscriberInterface
             'station_id' => $station->id,
             'ad_id' => $ad->id,
             'effective_duration' => $effectiveDuration,
+            'not_before' => $notBefore,
         ]);
     }
 
@@ -232,6 +244,23 @@ final class AdQueueBuilder implements EventSubscriberInterface
         }
         
         return $sq;
+    }
+
+    /**
+     * Calculate the timestamp when the current song will end.
+     * The ad should not be shown to the frontend before this time.
+     */
+    private function getNotBeforeTimestamp(Station $station): int
+    {
+        $np = $this->nowPlayingCache->getForStation($station);
+        if ($np !== null && $np->now_playing !== null) {
+            $playedAt = $np->now_playing->played_at ?? 0;
+            $duration = $np->now_playing->duration ?? 0;
+            if ($playedAt > 0 && $duration > 0) {
+                return $playedAt + $duration;
+            }
+        }
+        return time();
     }
 
     /**

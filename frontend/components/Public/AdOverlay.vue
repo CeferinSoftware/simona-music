@@ -20,20 +20,11 @@
                 />
             </div>
 
-            <!-- Audio Ad: real <audio> player + visual animation -->
+            <!-- Audio Ad: visual overlay only (audio plays through Icecast stream) -->
             <div
-                v-else-if="currentAd.media_type === 'audio' && audioSrc"
+                v-else-if="currentAd.media_type === 'audio'"
                 class="ad-audio-container"
             >
-                <audio
-                    ref="audioEl"
-                    :src="audioSrc"
-                    autoplay
-                    @ended="onAdMediaEnded"
-                    @timeupdate="onAudioTimeUpdate"
-                    @loadedmetadata="onAudioLoaded"
-                    @error="onAdMediaError"
-                />
                 <div class="ad-audio-visual">
                     <div class="ad-audio-icon">&#127925;</div>
                     <div class="ad-audio-title">{{ currentAd.name }}</div>
@@ -44,17 +35,6 @@
                             class="ad-pulse-bar"
                             :style="{ animationDelay: `${i * 0.12}s` }"
                         />
-                    </div>
-                    <div v-if="audioDuration > 0" class="ad-audio-progress">
-                        <div class="ad-progress-bar">
-                            <div
-                                class="ad-progress-fill"
-                                :style="{ width: audioProgressPct + '%' }"
-                            />
-                        </div>
-                        <div class="ad-progress-time">
-                            {{ formatSecs(audioCurrentTime) }} / {{ formatSecs(audioDuration) }}
-                        </div>
                     </div>
                 </div>
             </div>
@@ -94,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, onMounted, onUnmounted, nextTick, watch} from 'vue';
+import {computed, ref, onMounted, onUnmounted} from 'vue';
 import {useAxios} from '~/vendor/axios';
 import {usePlayerStore} from '~/functions/usePlayerStore';
 
@@ -125,11 +105,7 @@ const playerStore = usePlayerStore();
 const isAdPlaying = ref(false);
 const currentAd = ref<AdInfo | null>(null);
 const countdown = ref(0);
-const audioEl = ref<HTMLAudioElement | null>(null);
 const videoIframe = ref<HTMLIFrameElement | null>(null);
-const audioDuration = ref(0);
-const audioCurrentTime = ref(0);
-const audioProgressPct = ref(0);
 
 // Track the last processed ad ID to avoid re-triggering same ad
 let lastAdId: number | null = null;
@@ -161,13 +137,6 @@ const adEmbedUrl = computed(() => {
     }
 
     return url;
-});
-
-// --- COMPUTED: audio src for audio ads ---
-const audioSrc = computed(() => {
-    if (!currentAd.value) return '';
-    // Prefer media_url, fallback to media_path
-    return currentAd.value.media_url || currentAd.value.media_path || '';
 });
 
 // --- HELPERS ---
@@ -221,73 +190,33 @@ function startAd(ad: AdInfo) {
     currentAd.value = ad;
     isAdPlaying.value = true;
     lastAdId = ad.id;
-    audioDuration.value = 0;
-    audioCurrentTime.value = 0;
-    audioProgressPct.value = 0;
 
-    // Mute the background music stream
-    muteBackgroundStream();
-
-    // Start a fallback countdown (in case media events don't fire)
-    const fallbackDuration = ad.duration > 0 ? Math.min(ad.duration, MAX_AD_DURATION) : 60;
-    startCountdown(fallbackDuration);
-
-    // For audio ads, the <audio> element will autoplay via the template
-    // For video ads, YouTube iframe autoplays; we listen for its end via postMessage
+    // Only mute for VIDEO ads (audio ads play through the Icecast stream naturally)
     if (ad.media_type === 'video') {
+        muteBackgroundStream();
         setupYouTubeListener();
     }
+
+    // Fallback countdown
+    const fallbackDuration = ad.duration > 0
+        ? Math.min(ad.duration, MAX_AD_DURATION)
+        : (ad.media_type === 'video' ? 60 : 30);
+    startCountdown(fallbackDuration);
 }
 
 function endAd() {
-    // Stop audio if playing
-    if (audioEl.value) {
-        try {
-            audioEl.value.pause();
-            audioEl.value.src = '';
-        } catch { /* ignore */ }
-    }
+    const wasVideoAd = currentAd.value?.media_type === 'video';
 
     isAdPlaying.value = false;
     currentAd.value = null;
     stopCountdown();
 
-    // Remove YouTube listener to prevent stale callbacks
     window.removeEventListener('message', onYouTubeMessage);
 
-    // Unmute the background stream
-    unmuteBackgroundStream();
-}
-
-// --- AUDIO AD EVENTS ---
-function onAudioLoaded() {
-    if (audioEl.value) {
-        audioDuration.value = audioEl.value.duration || 0;
-        // Update countdown to actual duration
-        if (audioDuration.value > 0) {
-            stopCountdown();
-            startCountdown(Math.ceil(audioDuration.value));
-        }
+    // Only unmute for video ads (audio ads never muted the stream)
+    if (wasVideoAd) {
+        unmuteBackgroundStream();
     }
-}
-
-function onAudioTimeUpdate() {
-    if (audioEl.value) {
-        audioCurrentTime.value = audioEl.value.currentTime || 0;
-        if (audioDuration.value > 0) {
-            audioProgressPct.value = (audioCurrentTime.value / audioDuration.value) * 100;
-            countdown.value = Math.max(0, Math.ceil(audioDuration.value - audioCurrentTime.value));
-        }
-    }
-}
-
-function onAdMediaEnded() {
-    endAd();
-}
-
-function onAdMediaError() {
-    // If audio fails to load, end the ad after a short delay
-    setTimeout(() => endAd(), 2000);
 }
 
 // --- YOUTUBE END DETECTION ---

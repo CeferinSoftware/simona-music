@@ -154,65 +154,46 @@ const currentVideoUrl = computed(() => {
     return videoUrl.trim();
 });
 
-// When a YouTube/Vimeo video is showing, mute the Icecast stream
-// (audio comes from the video iframe). When no video, unmute.
-watch(currentVideoUrl, (hasVideo) => {
-    if (hasVideo) {
-        // Mute the Icecast stream — audio comes from YouTube/Vimeo
-        if (!playerStore.isMuted) {
-            playerStore.toggleMute();
-            mutedForVideo = true;
-        }
-    } else {
+// Embed URL — stored as ref, only updates when song changes (NOT on every NP update)
+// This prevents the iframe from reloading every 15 seconds
+const embedUrl = ref('');
+
+// When video URL changes (new song), build the embed URL and handle stream muting
+watch(currentVideoUrl, (newUrl) => {
+    if (!newUrl) {
+        embedUrl.value = '';
         // No video — unmute the Icecast stream
         if (mutedForVideo && playerStore.isMuted) {
             playerStore.toggleMute();
             mutedForVideo = false;
         }
+        return;
+    }
+
+    // Capture elapsed time ONCE for sync (prevents iframe reload on NP updates)
+    const elapsed = Math.max(0, Math.floor(localNp.value?.now_playing?.elapsed ?? 0));
+
+    // Build embed URL based on provider
+    if (newUrl.includes('youtube.com') || newUrl.includes('youtu.be')) {
+        const videoId = extractYouTubeId(newUrl);
+        embedUrl.value = videoId
+            ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}`
+            : '';
+    } else if (newUrl.includes('vimeo.com')) {
+        const videoId = extractVimeoId(newUrl);
+        embedUrl.value = videoId
+            ? `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0&loop=1`
+            : '';
+    } else {
+        embedUrl.value = newUrl;
+    }
+
+    // Mute the Icecast stream — audio comes from YouTube/Vimeo
+    if (!playerStore.isMuted) {
+        playerStore.toggleMute();
+        mutedForVideo = true;
     }
 }, { immediate: true });
-
-// Convert YouTube/Vimeo URL to embed format
-const embedUrl = computed(() => {
-    if (!currentVideoUrl.value) {
-        console.log('FullscreenDisplay: No currentVideoUrl, returning empty string');
-        return '';
-    }
-
-    const url = currentVideoUrl.value;
-    console.log('FullscreenDisplay: Converting URL to embed format:', url);
-
-    // YouTube - soporta varios formatos de URL
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-        const videoId = extractYouTubeId(url);
-        if (!videoId) {
-            console.error('FullscreenDisplay: Could not extract YouTube video ID from:', url);
-            return '';
-        }
-        // Audio comes from the YouTube video (Icecast stream is muted via watcher)
-        // Use start= to sync video position with the current song elapsed time
-        const elapsed = Math.max(0, Math.floor(localNp.value?.now_playing?.elapsed ?? 0));
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}`;
-        console.log('FullscreenDisplay: YouTube embed URL:', embedUrl, 'start=', elapsed);
-        return embedUrl;
-    }
-
-    // Vimeo - audio from the Vimeo video (Icecast stream muted via watcher)
-    if (url.includes('vimeo.com')) {
-        const videoId = extractVimeoId(url);
-        if (!videoId) {
-            console.error('FullscreenDisplay: Could not extract Vimeo video ID from:', url);
-            return '';
-        }
-        const embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0&controls=0&title=0&byline=0&portrait=0&loop=1`;
-        console.log('FullscreenDisplay: Vimeo embed URL:', embedUrl);
-        return embedUrl;
-    }
-
-    // Si no es YouTube ni Vimeo, devolver la URL original
-    console.log('FullscreenDisplay: URL is not YouTube or Vimeo, using as-is');
-    return url;
-});
 
 function extractYouTubeId(url: string): string {
     // Mejorada para soportar más formatos de URLs de YouTube
