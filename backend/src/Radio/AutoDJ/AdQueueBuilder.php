@@ -68,11 +68,13 @@ final class AdQueueBuilder implements EventSubscriberInterface
 
         $station = $event->getStation();
 
-        // If an ad is currently in cooldown (recently played), skip entirely.
+        // If an ad is currently in cooldown (recently played), still count the song
+        // but don't insert an ad yet.
         if ($this->isOnCooldown($station)) {
-            $this->logger->debug('Ad on cooldown, skipping.', [
+            $this->logger->debug('Ad on cooldown, incrementing counter only.', [
                 'station_id' => $station->id,
             ]);
+            $this->incrementSongCounter($station);
             return;
         }
         

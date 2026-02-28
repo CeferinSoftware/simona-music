@@ -288,11 +288,6 @@ async function checkForAd() {
         } else {
             // Server says no ad playing
             if (isAdPlaying.value) {
-                // Let audio ads finish naturally via their ended event
-                const audioStillPlaying = audioEl.value && !audioEl.value.paused && !audioEl.value.ended;
-                if (audioStillPlaying) {
-                    return;
-                }
                 // Let video ads finish via countdown or YouTube end event
                 if (currentAd.value?.media_type === 'video' && countdown.value > 0) {
                     return;

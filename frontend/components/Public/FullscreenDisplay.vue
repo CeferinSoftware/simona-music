@@ -170,14 +170,14 @@ watch(currentVideoUrl, (newUrl) => {
         return;
     }
 
-    // Capture elapsed time ONCE for sync (prevents iframe reload on NP updates)
-    const elapsed = Math.max(0, Math.floor(localNp.value?.now_playing?.elapsed ?? 0));
+    // Always start from 0 — the video provides its own audio,
+    // no need to sync with the Icecast stream position
 
     // Build embed URL based on provider
     if (newUrl.includes('youtube.com') || newUrl.includes('youtu.be')) {
         const videoId = extractYouTubeId(newUrl);
         embedUrl.value = videoId
-            ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&start=${elapsed}`
+            ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}`
             : '';
     } else if (newUrl.includes('vimeo.com')) {
         const videoId = extractVimeoId(newUrl);
