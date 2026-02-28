@@ -163,28 +163,40 @@ let mutedAudioElements: HTMLAudioElement[] = [];
 let pausedIframes: HTMLIFrameElement[] = [];
 
 // --- MUTE / UNMUTE background stream ---
-function muteBackgroundStream() {
-    // Save current store state
+function muteBackgroundStream(adMediaType: string) {
+    // Save current store state so we can restore it later
     volumeBeforeAd = playerStore.volume;
     wasMutedBeforeAd = playerStore.isMuted;
-    // Set store state (for AudioPlayer watcher)
-    if (!playerStore.isMuted) {
-        playerStore.toggleMute();
+
+    if (adMediaType === 'audio') {
+        // AUDIO ADs: Liquidsoap already plays the .mp3 through the Icecast stream.
+        // We need the stream to be AUDIBLE so listeners hear the ad.
+        // If the stream is currently muted (e.g. video/videoclip mode), unmute it.
+        if (playerStore.isMuted) {
+            playerStore.toggleMute(); // unmute
+        }
+        // Also directly unmute DOM <audio> elements (belt and suspenders)
+        document.querySelectorAll('audio').forEach((el) => {
+            (el as HTMLAudioElement).muted = false;
+        });
+        mutedAudioElements = []; // nothing was muted by us
+    } else {
+        // VIDEO ADs: mute the stream, ad plays in its own iframe/overlay
+        if (!playerStore.isMuted) {
+            playerStore.toggleMute();
+        }
+        mutedAudioElements = [];
+        document.querySelectorAll('audio').forEach((el) => {
+            const audio = el as HTMLAudioElement;
+            if (!audio.muted) {
+                audio.muted = true;
+                mutedAudioElements.push(audio);
+            }
+        });
     }
 
-    // DIRECT: mute ALL existing <audio> elements in the page.
-    // The ad's own <audio> is not yet in the DOM (Vue batches DOM updates).
-    mutedAudioElements = [];
-    document.querySelectorAll('audio').forEach((el) => {
-        const audio = el as HTMLAudioElement;
-        if (!audio.muted) {
-            audio.muted = true;
-            mutedAudioElements.push(audio);
-        }
-    });
-
     // KILL YouTube / Vimeo iframes by blanking their src.
-    // postMessage is unreliable — about:blank guarantees audio stops instantly.
+    // This guarantees video audio stops instantly (both ad types need this).
     pausedIframes = [];
     document.querySelectorAll('iframe').forEach((iframe) => {
         const src = iframe.src || '';
@@ -194,7 +206,7 @@ function muteBackgroundStream() {
         }
     });
 
-    console.log('[AdOverlay] Muted', mutedAudioElements.length, 'audio elements, blanked', pausedIframes.length, 'iframes');
+    console.log('[AdOverlay] Background handled for', adMediaType, 'ad. Blanked', pausedIframes.length, 'iframes');
 }
 
 function unmuteBackgroundStream() {
@@ -233,17 +245,24 @@ function startAd(ad: AdInfo) {
     isAdPlaying.value = true;
     lastAdId = ad.id;
 
-    // Always mute the Icecast stream — ad audio replaces the music
-    muteBackgroundStream();
+    // Handle background audio based on ad type
+    muteBackgroundStream(ad.media_type);
 
-    // Ensure the ad's own audio plays after Vue renders the <audio> element
     nextTick(() => {
         if (adAudioEl.value) {
-            adAudioEl.value.volume = 1.0;
-            adAudioEl.value.muted = false;
-            adAudioEl.value.play().catch((err) => {
-                console.warn('[AdOverlay] Ad audio autoplay blocked:', err);
-            });
+            if (ad.media_type === 'audio') {
+                // Audio ads: Liquidsoap plays the .mp3 through the stream.
+                // Mute+pause the separate <audio> element to avoid echo.
+                adAudioEl.value.muted = true;
+                adAudioEl.value.pause();
+            } else {
+                // Video ads with separate audio URL: try to play directly
+                adAudioEl.value.volume = 1.0;
+                adAudioEl.value.muted = false;
+                adAudioEl.value.play().catch((err) => {
+                    console.warn('[AdOverlay] Ad audio autoplay blocked:', err);
+                });
+            }
         }
     });
 
