@@ -252,11 +252,17 @@ function startAd(ad: AdInfo) {
         setupYouTubeListener();
     }
 
-    // Fallback countdown
-    const fallbackDuration = ad.duration > 0
-        ? Math.min(ad.duration, MAX_AD_DURATION)
-        : (ad.media_type === 'video' ? 60 : 30);
-    startCountdown(fallbackDuration);
+    // Countdown: only if duration > 0 (explicit duration set).
+    // duration=0 means "play until the video/audio ends naturally".
+    if (ad.duration > 0) {
+        const fallbackDuration = Math.min(ad.duration, MAX_AD_DURATION);
+        startCountdown(fallbackDuration);
+    } else {
+        // No countdown — ad will end via YouTube onStateChange or hijacked audio 'ended' event.
+        // Set countdown to -1 as a flag that we're in "no-countdown" mode.
+        countdown.value = -1;
+        console.log('[AdOverlay] duration=0, no countdown — waiting for natural end');
+    }
 }
 
 function endAd() {
@@ -347,11 +353,16 @@ async function checkForAd() {
         } else {
             // Server says no ad playing
             if (isAdPlaying.value) {
-                // Let ads finish their countdown naturally — don't cut them short
+                // If countdown is active and > 0, let it finish
                 if (countdown.value > 0) {
                     return;
                 }
-                // Countdown done or no countdown, end the ad
+                // If countdown is -1, we're in "no-countdown" mode (duration=0).
+                // Don't end the ad from polling — wait for natural end (YouTube/audio ended event).
+                if (countdown.value === -1) {
+                    return;
+                }
+                // Countdown done, end the ad
                 endAd();
             }
             // Server confirms no ad playing — clear lastAdId so the same

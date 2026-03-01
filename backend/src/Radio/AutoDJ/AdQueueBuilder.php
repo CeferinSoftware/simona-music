@@ -114,8 +114,13 @@ final class AdQueueBuilder implements EventSubscriberInterface
         // Calculate effective duration for cooldown
         $effectiveDuration = (int) $ad->duration;
         if ($effectiveDuration <= 0) {
-            // Default durations when not set
-            $effectiveDuration = ($ad->media_type === AdMediaType::Video) ? 60 : 30;
+            if ($ad->media_type === AdMediaType::Video) {
+                // Video ads with duration=0: "play until video ends naturally".
+                // Use a very long cache/cooldown (1 hour) so the frontend controls the end.
+                $effectiveDuration = 3600;
+            } else {
+                $effectiveDuration = 30;
+            }
         }
 
         if ($ad->media_type === AdMediaType::Video) {
