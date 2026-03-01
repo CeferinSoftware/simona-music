@@ -210,29 +210,30 @@ function muteBackgroundStream(adMediaType: string) {
 }
 
 function unmuteBackgroundStream() {
-    // Restore store state
-    if (volumeBeforeAd !== null) {
-        if (wasMutedBeforeAd) {
-            if (!playerStore.isMuted) playerStore.toggleMute();
-        } else {
-            if (playerStore.isMuted) playerStore.toggleMute();
-        }
-        volumeBeforeAd = null;
+    // ALWAYS leave the stream UNMUTED when the ad ends.
+    // FullscreenDisplay will re-mute it if the next song has a video.
+    // We must NOT restore to "muted" — that causes silence after ads.
+    if (playerStore.isMuted) {
+        playerStore.toggleMute(); // ensure audible
     }
+    volumeBeforeAd = null;
 
-    // DIRECT: unmute audio elements we muted
+    // Unmute any DOM audio elements we may have muted (video ad case)
     mutedAudioElements.forEach((audio) => {
         audio.muted = false;
     });
     mutedAudioElements = [];
 
+    // Also directly unmute all audio elements in the page (belt and suspenders)
+    document.querySelectorAll('audio').forEach((el) => {
+        (el as HTMLAudioElement).muted = false;
+    });
+
     // Tell FullscreenDisplay to rebuild the video embed with fresh elapsed time.
-    // The iframe was blanked in muteBackgroundStream(), so we dispatch an event
-    // instead of trying to restore it directly.
     pausedIframes = [];
     document.dispatchEvent(new CustomEvent('ad-ended'));
 
-    console.log('[AdOverlay] Unmuted background stream, dispatched ad-ended event');
+    console.log('[AdOverlay] Stream left unmuted, dispatched ad-ended event');
 }
 
 // --- AD LIFECYCLE ---
