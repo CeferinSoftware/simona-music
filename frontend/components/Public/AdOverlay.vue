@@ -36,14 +36,6 @@
                             :style="{ animationDelay: `${i * 0.12}s` }"
                         />
                     </div>
-                    <!-- Play audio from URL if available -->
-                    <audio
-                        v-if="currentAd.media_url"
-                        ref="adAudioEl"
-                        :src="currentAd.media_url"
-                        autoplay
-                        @ended="onAdAudioEnded"
-                    />
                 </div>
             </div>
 
@@ -100,7 +92,10 @@ const isAdPlaying = ref(false);
 const currentAd = ref<AdInfo | null>(null);
 const countdown = ref(0);
 const videoIframe = ref<HTMLIFrameElement | null>(null);
-const adAudioEl = ref<HTMLAudioElement | null>(null);
+
+// Track the hijacked stream audio element
+let hijackedAudio: HTMLAudioElement | null = null;
+let savedStreamSrc: string = '';
 
 // Track the last processed ad ID to avoid re-triggering same ad
 let lastAdId: number | null = null;
@@ -158,30 +153,14 @@ function formatSecs(s: number): string {
     return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-// Keep references to elements we muted so we can restore them
-let mutedAudioElements: HTMLAudioElement[] = [];
+// Keep references to iframes we blanked so FullscreenDisplay can rebuild them
 let pausedIframes: HTMLIFrameElement[] = [];
 
-// --- MUTE / UNMUTE background stream ---
-function muteBackgroundStream() {
-    // Save current store state so we can restore it later
+// --- KILL BACKGROUND AUDIO/VIDEO ---
+function killBackgroundMedia() {
+    // Save current store state
     volumeBeforeAd = playerStore.volume;
     wasMutedBeforeAd = playerStore.isMuted;
-
-    // Mute the Icecast stream (if not already muted)
-    if (!playerStore.isMuted) {
-        playerStore.toggleMute();
-    }
-
-    // Mute ALL existing <audio> elements in the page (stream audio)
-    mutedAudioElements = [];
-    document.querySelectorAll('audio').forEach((el) => {
-        const audio = el as HTMLAudioElement;
-        if (!audio.muted) {
-            audio.muted = true;
-            mutedAudioElements.push(audio);
-        }
-    });
 
     // KILL YouTube / Vimeo iframes by blanking their src.
     pausedIframes = [];
@@ -193,34 +172,37 @@ function muteBackgroundStream() {
         }
     });
 
-    console.log('[AdOverlay] Muted', mutedAudioElements.length, 'audio els, blanked', pausedIframes.length, 'iframes');
+    console.log('[AdOverlay] Blanked', pausedIframes.length, 'iframes');
 }
 
-function unmuteBackgroundStream() {
-    // ALWAYS leave the stream UNMUTED when the ad ends.
-    // FullscreenDisplay will re-mute it if the next song has a video.
-    // We must NOT restore to "muted" — that causes silence after ads.
-    if (playerStore.isMuted) {
-        playerStore.toggleMute(); // ensure audible
+function restoreAfterAd() {
+    // Restore the hijacked stream audio element
+    if (hijackedAudio) {
+        hijackedAudio.removeEventListener('ended', onHijackedAudioEnded);
+        if (savedStreamSrc) {
+            hijackedAudio.src = savedStreamSrc;
+            hijackedAudio.muted = false;
+            hijackedAudio.play().catch(() => {});
+        }
+        hijackedAudio = null;
+        savedStreamSrc = '';
     }
-    volumeBeforeAd = null;
 
-    // Unmute any DOM audio elements we may have muted (video ad case)
-    mutedAudioElements.forEach((audio) => {
-        audio.muted = false;
-    });
-    mutedAudioElements = [];
+    // Ensure stream is audible — FullscreenDisplay will re-mute if needed for video
+    if (playerStore.isMuted) {
+        playerStore.toggleMute();
+    }
 
-    // Also directly unmute all audio elements in the page (belt and suspenders)
+    // Unmute all audio elements
     document.querySelectorAll('audio').forEach((el) => {
         (el as HTMLAudioElement).muted = false;
     });
 
-    // Tell FullscreenDisplay to rebuild the video embed with fresh elapsed time.
+    // Tell FullscreenDisplay to rebuild the video embed
     pausedIframes = [];
     document.dispatchEvent(new CustomEvent('ad-ended'));
 
-    console.log('[AdOverlay] Stream left unmuted, dispatched ad-ended event');
+    console.log('[AdOverlay] Restored stream, dispatched ad-ended event');
 }
 
 // --- AD LIFECYCLE ---
@@ -233,25 +215,38 @@ function startAd(ad: AdInfo) {
     isAdPlaying.value = true;
     lastAdId = ad.id;
 
-    // Mute everything in the background
-    muteBackgroundStream();
+    // Kill background media (iframes)
+    killBackgroundMedia();
 
-    // Play the ad's own <audio> element directly from its URL.
-    // This is the ONLY audio source during ads — we don't rely on the Icecast stream.
-    nextTick(() => {
-        if (adAudioEl.value) {
-            adAudioEl.value.muted = false;
-            adAudioEl.value.volume = 1.0;
-            adAudioEl.value.currentTime = 0;
-            adAudioEl.value.play().then(() => {
-                console.log('[AdOverlay] Ad audio playing successfully');
+    // HIJACK the existing stream <audio> element to play the ad.
+    // This bypasses Chrome's autoplay policy because this element
+    // already has play permission from the initial page interaction.
+    if (ad.media_url) {
+        const streamAudio = document.querySelector('audio') as HTMLAudioElement | null;
+        if (streamAudio) {
+            hijackedAudio = streamAudio;
+            savedStreamSrc = streamAudio.src;
+
+            // Change source to ad audio
+            streamAudio.src = ad.media_url;
+            streamAudio.muted = false;
+            streamAudio.volume = 1.0;
+
+            // Ensure store says unmuted so AudioPlayer doesn't fight us
+            if (playerStore.isMuted) {
+                playerStore.toggleMute();
+            }
+
+            streamAudio.addEventListener('ended', onHijackedAudioEnded, { once: true });
+            streamAudio.play().then(() => {
+                console.log('[AdOverlay] Ad playing via hijacked stream audio element');
             }).catch((err) => {
-                console.warn('[AdOverlay] Ad audio play() failed:', err);
+                console.warn('[AdOverlay] Hijacked audio play() failed:', err);
             });
         } else {
-            console.warn('[AdOverlay] No adAudioEl ref found after nextTick');
+            console.warn('[AdOverlay] No stream <audio> element found to hijack');
         }
-    });
+    }
 
     if (ad.media_type === 'video') {
         setupYouTubeListener();
@@ -272,13 +267,13 @@ function endAd() {
 
     window.removeEventListener('message', onYouTubeMessage);
 
-    // Always unmute after ad ends
-    unmuteBackgroundStream();
+    // Restore stream and rebuild video
+    restoreAfterAd();
 }
 
-// --- AD AUDIO END DETECTION ---
-function onAdAudioEnded() {
-    console.log('[AdOverlay] Ad audio ended naturally');
+// --- HIJACKED AUDIO END DETECTION ---
+function onHijackedAudioEnded() {
+    console.log('[AdOverlay] Ad audio ended naturally (hijacked element)');
     endAd();
 }
 
