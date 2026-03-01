@@ -163,40 +163,27 @@ let mutedAudioElements: HTMLAudioElement[] = [];
 let pausedIframes: HTMLIFrameElement[] = [];
 
 // --- MUTE / UNMUTE background stream ---
-function muteBackgroundStream(adMediaType: string) {
+function muteBackgroundStream() {
     // Save current store state so we can restore it later
     volumeBeforeAd = playerStore.volume;
     wasMutedBeforeAd = playerStore.isMuted;
 
-    if (adMediaType === 'audio') {
-        // AUDIO ADs: Liquidsoap already plays the .mp3 through the Icecast stream.
-        // We need the stream to be AUDIBLE so listeners hear the ad.
-        // If the stream is currently muted (e.g. video/videoclip mode), unmute it.
-        if (playerStore.isMuted) {
-            playerStore.toggleMute(); // unmute
-        }
-        // Also directly unmute DOM <audio> elements (belt and suspenders)
-        document.querySelectorAll('audio').forEach((el) => {
-            (el as HTMLAudioElement).muted = false;
-        });
-        mutedAudioElements = []; // nothing was muted by us
-    } else {
-        // VIDEO ADs: mute the stream, ad plays in its own iframe/overlay
-        if (!playerStore.isMuted) {
-            playerStore.toggleMute();
-        }
-        mutedAudioElements = [];
-        document.querySelectorAll('audio').forEach((el) => {
-            const audio = el as HTMLAudioElement;
-            if (!audio.muted) {
-                audio.muted = true;
-                mutedAudioElements.push(audio);
-            }
-        });
+    // Mute the Icecast stream (if not already muted)
+    if (!playerStore.isMuted) {
+        playerStore.toggleMute();
     }
 
+    // Mute ALL existing <audio> elements in the page (stream audio)
+    mutedAudioElements = [];
+    document.querySelectorAll('audio').forEach((el) => {
+        const audio = el as HTMLAudioElement;
+        if (!audio.muted) {
+            audio.muted = true;
+            mutedAudioElements.push(audio);
+        }
+    });
+
     // KILL YouTube / Vimeo iframes by blanking their src.
-    // This guarantees video audio stops instantly (both ad types need this).
     pausedIframes = [];
     document.querySelectorAll('iframe').forEach((iframe) => {
         const src = iframe.src || '';
@@ -206,7 +193,7 @@ function muteBackgroundStream(adMediaType: string) {
         }
     });
 
-    console.log('[AdOverlay] Background handled for', adMediaType, 'ad. Blanked', pausedIframes.length, 'iframes');
+    console.log('[AdOverlay] Muted', mutedAudioElements.length, 'audio els, blanked', pausedIframes.length, 'iframes');
 }
 
 function unmuteBackgroundStream() {
@@ -246,24 +233,23 @@ function startAd(ad: AdInfo) {
     isAdPlaying.value = true;
     lastAdId = ad.id;
 
-    // Handle background audio based on ad type
-    muteBackgroundStream(ad.media_type);
+    // Mute everything in the background
+    muteBackgroundStream();
 
+    // Play the ad's own <audio> element directly from its URL.
+    // This is the ONLY audio source during ads — we don't rely on the Icecast stream.
     nextTick(() => {
         if (adAudioEl.value) {
-            if (ad.media_type === 'audio') {
-                // Audio ads: Liquidsoap plays the .mp3 through the stream.
-                // Mute+pause the separate <audio> element to avoid echo.
-                adAudioEl.value.muted = true;
-                adAudioEl.value.pause();
-            } else {
-                // Video ads with separate audio URL: try to play directly
-                adAudioEl.value.volume = 1.0;
-                adAudioEl.value.muted = false;
-                adAudioEl.value.play().catch((err) => {
-                    console.warn('[AdOverlay] Ad audio autoplay blocked:', err);
-                });
-            }
+            adAudioEl.value.muted = false;
+            adAudioEl.value.volume = 1.0;
+            adAudioEl.value.currentTime = 0;
+            adAudioEl.value.play().then(() => {
+                console.log('[AdOverlay] Ad audio playing successfully');
+            }).catch((err) => {
+                console.warn('[AdOverlay] Ad audio play() failed:', err);
+            });
+        } else {
+            console.warn('[AdOverlay] No adAudioEl ref found after nextTick');
         }
     });
 
